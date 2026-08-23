@@ -1,0 +1,2097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Taxi Sharm — Settlement</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    html,body{margin:0;padding:0;background:#F3F6F4;font-family:Outfit,system-ui,-apple-system,sans-serif}
+    a{color:#12474C}a:hover{color:#1F6E74}
+  </style>
+</head>
+<body>
+<taxi-portal></taxi-portal>
+
+<!-- 1 · logo -->
+<script>
+window.TAXI_LOGO = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAQDAwQDAwQEBAQFBQQFBwsHBwYGBw4KCggLEA4RERAOEA8SFBoWEhMYEw8QFh8XGBsbHR0dERYgIh8cIhocHRz/2wBDAQUFBQcGBw0HBw0cEhASHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBz/wAARCAFAAUADASIAAhEBAxEB/8QAHQABAAICAwEBAAAAAAAAAAAAAAcIBQYBAwQCCf/EAFsQAAEDAwEEBgUEDAkGDQUAAAECAwQABREGBxIhMQgTIkFRYRQycYGRF1OhwRUWIzNCUnKCsbKz0hg3VmJzdJKU0SQ1Q3Wi8AkmNEZUY2SDk8LD4fElJzaVo//EABsBAQACAwEBAAAAAAAAAAAAAAADBAECBQYH/8QAPBEAAgICAAQDBAgDBgcAAAAAAAECAwQRBRIhMRNBURQiYXEGMoGRobHh8FLB0QcVMzRCohZDU2KCkvH/2gAMAwEAAhEDEQA/AL/UpSgFKUoBSlKAUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgFKUoBXytaW0lSiEpAySTgAV9cqgjpJbSDpvTJsMB4puV3SW1KTjLbH4Z/O9UfneFZjFyaiiK+6NMHOXkTqhaXEhSSFJUMgg5BFfVQT0btpH2yaaFgnPFdztCQhKlc3GPwT+b6p/N8anbnWZRcXpii6N1asj5ilKVqSilKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSuCcDNAY2/XiLYrVLuEx0NRozanXFn8FIGTX55a61dK1zqife5RI9IXhpvubbHBKfhz8yTU79KDaMXFs6RgPeD04pV3c0Nn9Y/m1WaruNXpc7PN8WyuefhR7L8zY9Cauk6H1Tb73GyeoXh1v5xs8FJ+HLzxX6G2K7xr7a4twiOh2NJbS62sd6SMivzPqzvRe2i7vXaQnvcRl+CVq5/jtj9YfnUya9rmXkOFZXJPwpdn+ZaWlcA5Fc1SPSClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUrply2YMZ6TIcS0wyguLWs4CUgZJJ8AKDsd1KgCV0rdPpkuph2K6y4iV9WiQkJSHFd2Bnv8+PlXQrpZ2IYI07dyFep6naI5jn3VJ4U/Qqe3UfxFhqVXr+Frp8je+1+79V+PhHP419fwtNOApzYbwAPvvZR2DnH43H6KeDP0Ht+P8AxFg6VXn+FlZRhStNXcNniFZRxHjz8K9106VOl4yo6bdbLncVONJddDaAnqcjik55kd+OHnTwp+hn26j+InilV5/hZ2InCdO3cq5Y7Hfy7++n8LKygYXpq8JV4dj/AB8j8Kz4M/Qx7fj/AMRYatS2i6zi6G0vPu8nCuoR9zbzguOHglI9p+jNRKOlnZD/AM3LvhXqep2s8u/vqHNs21pe1KRBbt8WVHtMRO+WnQMqdPNRxkYA4D2nxraFEm+q6EGRxGqNbdb2yM7rdJd8uUq5TnS7MlOF11Z7yfqrx1yUqAJKTgDe5d3jRSFIxvJIz4jFdDprR5d7b2zivbaLrLsdziXKC6WpcVwONrHcR9VeKlGjCentH6MbPtYRdb6XgXiMQA+jtt5yW1jgpJ9hz9FbVVK+jftDOmdT/YGY6RbruoBvPJt/kk/ner7d2rpNq30gjvrmWw5JaPYYWQr6lLz8z6pSlRlsUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgFaPtTS9L0XfIUdIU9JhutISTgEqQQBmt4rB6igenRFoHeKb11NZR5ouPqUr0xrmDpmzWm2XaDdHZlsltPJZSgNpaCZCXVcQsb+QD2VpPE53gABXdA2qWy2CBMbs7rV0txk+jIYw20kvLSSvKio7wQFDljtd2K2DWlrnX/AFuzo7TiA5d3O1IeJwmMjGck93DiT5gDiamPSfRp0dZYrSruw5eriOK3pC1JQT5IBxj25q0rI65prucT2a1z5KZbS82v3sr0vafZ41olW2322Wy0+ZTiApXYa65SDubgWEqACVgKIyOyR3iujVW1C3aggaojRrIiG9eXkOmSkDfdKHt5G+M4ThsYwnOVFRPOrU3TYHs9ujJbVp1iOrGAuKpTSh8Dg+8VV/bFsUmbM3W50R5c2wPr3EPKT22VHkleOHsV3+A79651yel3IcrHyaYNvTXwOh/aBZJjVpbfXdkNsW4wJDbbKSBmIWCtGXsK7RzjdTwJ4+OK0lqqzaal3RpS7q9apBQpLSG0tOvbucBS0uAtntHBSVDxB4VuPRk0/atRayuke7W2JPYbgFaW5TKXEpV1iBkBQPHBNSJ0lNHad05oOJLtVitsGSbg2guxoyG17u4skZSBw4CsuUYy5NGsKrbKfaNroRRH2p21mVHWq0PNtsrtSi42gdasRQkOBRKsHO72eA88V823adabZdXpIjT5zDjiXA3JbACsRpDRSQXVnBU8k+ty3uXCpBs+z9+4RGnNwkKSDXfO2bqgsLedAQ2gFSlEYAA76q+0L+H8TorAs6PxPwI4a2qWtidGlrtDrylXZi5OtyEZEYIQlKkMELHAbvZ3hgDAPLjp+nNVmz2i82xyTPbj3ItDMZfqAOArON4DJSMefI8Kxeobkm53R5xpRMZBKGvNIPP386mDY10fndcRWb7f3XI1jWT1LDfB2SAeefwU5HPme7HOrnuxhuXQ46dt13h1PevMwj+1W0SLpEuwtUtt63MuRGIJU2uPJjnG406cDCUdrhhWeHHhmtR1lqaJf41sYimYsxFyFrdlhO+51jpWM4JyRnGeHsFXThbC9n0KMWEaYhrSRgreKnF/2lEke6o92g9F6yXCC7I0lvW64oBUmO44VsvHwyokpPnnHlUcbq9ly/AyXB9U/kVCpXonQZFsmyIUtlTMqO4pp1tYwUqBwQalbYvsSf2lOOXK4PORNPxnOrUtAHWSFjBKU55AZ4qwfAd+LUpqK5mciqids/DiupEaFqbWlaFFK0kEEcwRV69im1CJrrTUVqVLZF+jp6uTHKgFq3f9IE8yCMHI4ZyKy9p2K6Cs0fqWdMW93xXKb69R968/RUP7d9n2j9FQINz0/HftmqZcpLcFm3rUOtXnjhGezgd6ccSB31TnZG73Tt0Y12CnZtNeaLF3nUVo09HTIu1yiQWVHCVyXUthR8Bk8TWAj7WNDyng01qm1FZOAFSEpyfaajDSfR6F8Ave0mfKvN5kjeVGLyg2xn8HIwSfIYA5cedblM6PezmWx1X2utskDgtl9xKh797j76h1BdGzoKeRJc0YpL49yTG3UOoStCgpChkKScgisZcdUWO0SW41wvFviSHOKWpEhCFK9gJzVZ9ZWzWXR5bkSdO3R6dpOalTIRJG+YTigQk45A8sKGAcYI5Vs2g+jxp2/aUh3jUzs25Xm7splrfVIUC3vp3gB4nBGSc8ay4RS5m+hqsmyUvDjD3l32+hYZK0rSFJUCkjII5GsDe9daa0271V2vlvhvYz1bz6QvH5Oc1VxEnXWkdT3jZLpe4vPpeeQY8xxR34jKkbyiFfgDChkjkRw4qqW9L9GrSFsYS7fG3r7dFnedkyXFJSpXfhIP6SaOEY9ZMQybbelceq777fqb7atpmj73IbjwNSW16Q4cIaD6QtR8ADxNbUCDUUXvo57P7rGcQxaDb5BGEPxXlAoPcd0kp+itH01qTUexPWULSGqpy7lpq4ndgXJzP3I5wASc4GSAU54ZBHCscsZfVZv49lbXjLo/NfzLIUr5SsLAI5Gvqoy2KUpQClKUApSlAKUpQClKUApSlAKxWoLi1arZJlvHDbDanFHwAGT+isrUe7YXlo0JqAIPaMF8D/AMM0Xc0seoto0HoxWxV0tt+1rPbC7neJi0B1Q49WnBIB7gVKI/MHhXj6R21676TmxNN6fkmJKeY6+TKQO2lJJCUpJ5HgSTz5Yrb+jTufI/Zd3GeskZx49cuoD6UbLje0/fWkhDsFlSCe8ZUP0g1ZglK5pnIvslVgxcHpvX4nm2X7cNVWTVNvYul3lXO1S30NPtTHC4UhRxvJUckEZzjODirh6z07G1ZpW7WiUgKalx1JGR6qsZSoeYUAfdX51WZSUXi3qWoJSmQ2SonAA3hxr9EF660uGiPtks+d3/prX71ZyIaknFGvC73OucbXtfEq/wBEzhru8A8/scof/wBUVLvSVsVz1Hoa3wbTAkTZa7k2Q0wgqVjcc4nwHmeFRJ0UMHaDfCOXoC8f+KirfPOtsNLddWlDaAVKWo4CQOZJrW2XLbzE2DWrMRwfZ7K2WeZtuskZsN6KtTjDaQA2t1BWQPY9zrUdqG2283PTkrTk/TMiwXd8hD5WogFv8LdyAeJ4d4xnjU+o28bPV3EQE6kY64r3N8tuBrP9Ju7uPPOKzmutCWXaLYHIFwabXvoKo8pIBWyo8lJPw4cjWFKKacom86ZWVyjTbv7n/wDD8+LJbjeLzbrck4VMkNsA/lqCfrr9Hlqh6X08tSG0s2+2RSoIQMBDbaeQHsFfnm+xcNnmtgh1ttVwsc9KwlYO4tTawpJ7junAPsNSbeOk/qu+Wmfa3rZZ0szmHIyy225vALSUnGV8+NT3VuzWuxzOH5NeMpqzpI1bUO3LW+ormqei+S7ezvbzUaG4W0Np7gcet7VZq0uwPaRM2iaTeVdClV1tz3UPOpSAHUkZSvA4A8wceHnVRbPso1te4yHoOmbi4wQN1a2+rCh4gqxn3VZvo1aKv+jLbqBq/Wx2CuS80poOKSd4BKs8ifGtblBR0u5Jw6eQ79z3p+pFnSs003ata2+7MpSlF2iq6wAc3WyAVe9KkfCrQbObI1p3Qlgt7SEo6mG2V7oxlakhSz71EmoC6YGPSNJf0cv/ANKrK2f/ADDA/qqP1RUU3uuJexopZVrS9Cj+0bbRqbVGp5zsG8zrfa2XVNxWIjymRuAkBSt0glR58eWeFbZsWu1y2o7ULGvUspU46ehOPMKXzUoKACleKgVg5/mioGe+/O/lq/TU5dE/+Mmf/qtz9o3VmcVGvaORjXWWZKU3tNlgduG0OTs40Yqdb0tm5y3hGjFwZShRBJWR34CT78VV7Se37WVk1CzOuN4fuMBxwekxpGCkozx3RjsEDljA4eFTF0vD/wAU9Pj/ALef2aqqOT2T7K0ori4dUWOJZNsMjUZaS0fpHqyxRNYaRudskJDkadGUkHwJGUqHmDgj2VUfQ/STv+jdOt2R+2xbkiIjqorrjhbU2kcAlWAd4Du5HHfVudGT0XbRtimJIKZMBlz4oGa/O3UVpk6dv1ytM1BRKhvraWk+ROCPIjiPI1HRGMtxkWeJWzr5La3rZazo2rf1dcdWa6u247eJr6InWJTgNoSkKKUjuHFA/NFeTpI7W71pa4wtN6flGG67H6+VJQPugCiQlKT+D6pJPPiMEca2Pot2aTa9mq5ElBQLjNcktA8+r3UoB95QT7KgrpMTEStqs1tJyYsZlpXkd3e/8wrMIqVz9DF1k6sGLT03/M2jo/7YdSSdZQ9OXm4vXKFcd9KFylb7jSwgqBCzxIO6Rg+PDFSz0lNPsXfZhOlrT/lVrdbksrHNPbCVe7dUfgPCqxbCf429L/06/wBkurd7cuOynU/9XH66aWpRtWhhTlbiTU3vW/yMjsy1A5qPR1mnvq3pD8VtTh8V7oCvpzW5VEWwR4r0NZ0k8mQPpqXarPu0del81cW/RClKVgkFKUoBSlKAUpSgFKUoBSlKAVpm0CIJlokMqTvIcQpCh4ggg1udY28wxLirTjORWGYa30ZXzo1aqa0/Iuuz+6OhmYy+p+HvnAdBA3kp8+AUB5nwqWNpWyex7T4bCLkXY8yNnqJbBAWgHmkg8Ck+HwxUB7T9CLeuaZsYrjzWTlt9skKSQcjiPA/CuzTnSF1hpBCIepLYm9Rm+HpLaure3fMgYOPMA+JqZS5nzRemc/Spj4N0dw8n3+8xWp+itqi1Jees02JdmUcUtnLLyvIA5T/tCoTuton2Oc7BuUN+HMa9Zl9BQoe491Xn0Jt40lrya3b4zz8K5O8G401ASpw4zhJBKSfLOfKsjtV2Z27aPpx+K80hFzZSVw5QGFNrHEAnvSeRHn4gVNDIlF6sRSt4ZTbBzx2V46JYxrq7/wCrVftEVMHSbvEq1bMXWozhQJ8puK6Rz3CFKI9+5j2E1EXRQbUzr+9NOJKXG4C0qSRggh1AIqTelb/FxD/1k1+o5WJ6dyN8f3eHy+0plgVe7o73aRd9lNmMpwuORS5FSo/iIUQke5OB7qojV3ujF/FXF/rT/wCtUuUvcKfB3q9r4EDdKGG1D2puONpAVKhNPLx3qGUZ+CBU4bENi1v0hZ4d6u8ND+opCA7l5IV6ICOCUjuVg8TzzkcucWdIaOiZtz07GcGW3mYjah5F9QNWk1bPetGkr5OjYEiJBfebzyCktkj6RUM5vkjFeZexqYPJtskvqswOotsGidJznINzv0dqY1wWy2hbqkHwUEJOD5Gsno/aDp7XrUp2wT/S24qkpdPVLb3SrOPWSM8jyr85C4t5RddUVuuHeWtXEqJ5kmrWdEP/ADXqn+nY/VXWbKFCGzGJxKd96r0kmY7pgf8AKdJf0cv/ANKrK2b/ADBA/qrf6gqtXTA/5TpHzRKH0tVHMPpDbRGmmYke6NLSlKWm0CE2okcgPVyTRVudcdGHlQx8qzn89EWvffnfy1fpqceih/GTO/1W5+0bqNkbNNaSB1idLXlW/wBrPoTgzn3VsWkLBtR0JdHLlYtO3eNMcZLClqt5XlBIJGFJPekVYs1KHKmcrGUq7o2OL0n6E1dLwf8AFTT5/wC3n9mqqwQNJX652xy5QrLcJNvazvyWYy1NjHPtAY4d/hW5bUNR7SL1bYLWtostmEh4qYL8IMAubp5EJGeGeFXP0LPs0jRNnftLrAtKYiAgpUMIATxB8CMHPmDUPO6YJdzoOmGdkSltx0l8yCejjtigRrY1pC/S0R3GVEQJDysIWkn70SeRBJxnmDjuGZ/u+i9N6jktTLpY7dOkNgBLsiOlagPDJHLyqgu0mRbJuvdQv2gtqtrktamlN43FceJTjuJyR5V2WLVOuI0NbFkud/ENsYKIjjxQj+zwTWZ0c3vRetmtPEfDXg2R5ki8Wvdodi2aWRUmc62l7cIjQmyAt4jkEjuHLJ5CqLuQtT7SLxdr1Htc+5SZDynpCorC3AgnkngDjAGAPAVr8yXJnyVyJr7z8lR7bj6ipZPmTxq9fR/m2WRsusrVqW3vsNlMtsEb6X8krKh5nJHlimvAjtdWzPP/AHjZySfKl5FU9hza2dr2mm3EKQ4iQ4lSVDBSQ2vIIq3W3H+KnU39XH66arftZvDje3cTtD4fvDKEp/yVsO70gIUF4TggkJwD5g11at1ltin6auEbUMCeizOoAkLdtqWkhORzUEjHHFJRdkoyMUWxx67Ker79UunYnPYDw0TaP6H66mWoh2FNoRoy0dWSUdQk8R39/wBNS9VN/WZ3aOlUfkhSlKwSilKUApSlAKUpQClKUApSlAK1rXt7e0/pK93CNu+kxYbzzW8MgLSgkfSK2Wo62yOFOhr+nPOC8P8AYNZXdGlrag2vQhPZ3scn7UNJQ9T3HWl1RInqd6xvG/xS4pPMq/m55VGe1XTEnZpqxVkj3iTMQY7b5dcGD2irhjJ8KtF0bP4n7H+XI/bLqAelH/Gif6gz+ldW4ScrHF9jg5NUYYkbY9JPXXbIijXWVEuEa4Nun0qK4l5tfeFJOQfiK/Sq1Tk3S1wpqRhMplDwHgFJB+uvzIV6p9lfpJofP2ladzz+x8f9mmmUl0NuCzblNP4FYLDrWy7K9umuZd1S+Ij63m0CO3vHeW4lfLI4c67NuW2rTO0PSEe1WgThKbmIfPXshCd0JWDxyfxhWjbQtOz9Xbcr9Z7W11syXOKEjuSMDKie4AZJqwOkui/pC0RGlXxDt5n81qW4ptoHwShJHD2k5+isy5ItTfc1qWRap0V65dvqyl2asnsY26aX0Hodiz3VM4y0PuOHqWQpOFHhxyKm75Dtnn8lYH9lX+NPkN2dj/mpb/gf8a1nfCa00zfH4dkY8+eElsqztO2h2jW21ewagtnXpgxRGQvr0BCsodKjwyeGDVzdWQXbtpO9wo43n5cF5lseKlNkD6TWsDYfs9HLSlv+Cv8AGt/QhLaEoSMJSMAZ7qhssjLSj5F/FxrIObta970PzALa2SW3UKQ6jsqQoYKSOYIq3HRJtkmPpm+z3WlIjy5SENKUMb+4k7xHiMqx7jUsXnZVovUNyNxuenIEiapW8p0t4Kz4qxje9+azEydY9D2IuyFxLXaIaOAADaEDwSkd/kOJqSy/xI8qRVxOGvHt8WUuiK29L6S2blpSOFAuoZkuKT3gEtgH/ZPwrf8Ao97LoGmNLQr/AC47bt7ujYfDq05LDShlKU55ZHEnzx3VWHaxrxW0TW067ISUQkJEeIgniGk8ifAklSsd2cVf22tIjWiI00kIQ0wlKUgcAAkYFLNwrjExh8l+VZd312MPc9oWkrNMchXHUtoiS2uC2X5jaFp9oJyK7rLrfTWpJaolov1tuEpKC4WoslDigkEAnAPLJHxr85Z8t6fPlypDinX33VuOOLOSpRUSSamzon/xkz/9VuftG6zPHUYc2zFPFZ23Kvl6Nkh9LwY0np7+vn9mqqnNTJLLDjDch1DDnrtpWQlXtHI1bHpef/imnv6+r9mqqjq9U1Nj/wCGUOKtrJevRFjOj3sThajjDVGo4wegb5TDiLHZdKTxcV4pyCAORwc1abr7XZkMResiQ0K7DLOUtg+SRw+isboWI1btC6ejsjDbVvYAx3/cxxr8+tWanuOr9Qz7vcpC3X33VFKSolLSMndQnwAHCoFF3Se2dKdlfDqYpR22Xo2j7I7BtFtrqZEZuPdQklie0gBxCu7ex6yfI+7FURuUO46Wu1wtby3Y0yK4ph9LainJBwfaO8e2rm9GvU0zUmzdAnvOPv26U5EDriipS0gJWnJPgF491V76S0JuJtXuC0AAyY7Lyvbubv8A5a3objNwZBxGELKY5MFpswuwof8A3b0uf+vX+yXVvNuP8VWp/wCrj9dNVD2Ffxt6X/p1/sl1b3bh/FVqf+rj9dNYv/xImeHf5Sz7fyMHsFOdD2b+gFS9UO7A+OiLRnuZ+upiqq/rM7NH+FH5IUpSsEopSlAKUpQClKUApSlAKUpQCtH2kwhcLBNiqHZfZW0fYoEVvFYbUUL0uEtOM5FYZhpNaZDnRXvwc0jcNNSVpTOs8pf3InCg2s5zj8sLHwrI7c9iT+0hyJdrPIYZvEVssqQ/kIfbySBvAHBBJ7u+oj1Nbr3s+1mNU6bVuTBwfYIyl5PDII7wccR5AjjUq6W6T+lLi0hq/NybLOSMOBxpTjW934UkE/ECp0234kDm6rVfs2R0S7Pya8upFGk+i1qifc2/thMW32xCx1oQ8HXHU54hITwGfEnhnkat8pcW0W4qWpDESI1kk8EoQkfQABUcXDpEbPIEdTovhkqA4NR47ilK8hlIHxIqvW13pBzdfxF2ezR3bdZHMF0u466QPA44JT5DOcc+6t3Gy19SNWYuDBut7b+03fo6yGtXbT9c6sLZSpzPVJUOKEuuEj34bAqRdv8AtIuOzrS0Jy0KaTcrjI6hC3Eb3VpCFKUoA8MghI45HGoU6NOu9OaI+2U365twjL9HDO+hSt/d6zPqg8t4fGu/pLbQdOa2g6cbsFzbmqivPLeCEqTuApSB6wHga2cG7eq6ENeSoYTcZak9/PqzHafk7dNXWtm8WidcZMCSVbjqZTKAcEpPZJGOIPdWU+wfSG+duf8AfmP3q27Yjtg0XpTZtaLTeL2iLcGFPFxosuKKd51ShxSkjkR31IP8IPZx/KRv+7PfuViUpJtKP4G1VVM4KUrnt/8AcQh9gukN87cv76x+9Q2LpDfO3L++sfvVOH8ILZz/ACkb/uz37lP4QWzn+Ujf92e/crHPP+H8DfwMf/rP/wBiDjYekMoYLtzx5TmB/wCatavWyDbBqR5Dt3t86etGdwybi2vcz4Ar4e6rLfwgtnP8pG/7s9+5T+EFs5/lI3/dnv3KyrLF2j+BiWNiyWpXN/8AkV40V0aNXXG9x/tght2y1NrSp5SnkOLcSDxSkJJ4nlk4x58quHd7hHstlmzZK0tx4bC3VqPABKUk/VUfSOkRs5YaUsagDhA9RuK8VH2diq+7ZekA7tAhGyWSO/CsqlBT63sB2Rg5AIGQlOQDzyeHsrGrLZLmRlWYuFXLw5bb+0hAneUpX4xJ+mpd6Nl+j2LahGTJWEIuUdcNKjyCyQpI95QB7TURV9svORnm3mXFNvNKC0LQcFKgcgg9xzV2UeaPKefptddis9GXv26bOZe0jR6YttUgXOE96SwhZwl0hJBRnuyDwJ7wOVVk0/0dNd3a7sRJ9oNuhFeHpTzqCEJ7yACSo+GBz8OdS5s36UVskw49v1glcSc2kJM9tBU07jvUBkpUe/AI9nKpGnbe9n0GKp86iYewMhthta1q8gAP01STtrXKkegshh5TV0pfibXerhB0bpKXKdWGoNsiHGTyCU4SPMngK/NrmST3kmph2ybdJW0lKbXbmXYOn21BZbWfukhQ5FeDgAHiE8ePEnliH6nx63Fbfmc3ieVG+ajDsi1/RGvcdVkv9kLiRKakplpQTxUhSQkkewoHxFevpD7GbxrO4Q9Q6dYTKmttCPIi74QpaQSUqSTgZGSCM+GKrFo/V1z0Pf415tLoRJZOFJVxS6g80KHeD/71b/SfSX0XfYiPsnIcs83A32pKFKQT37q0ggj24PlUVkJwnzxLeJdRfj+z3PWiN9hWw7U9n1nE1BqGELdGt28pppbiVLeWpCkjgknAG9nJ8qk7pKX9iz7Lp8Va8Sro61GYQOajvhSvdupP0eNejUHSM0FZYanWboq5Pj1WIbSlKV7yAke81Aci9XnbXrOPdLs0I9qgn/JIAOQkE8z4k4GT34HdWjcm/En5FmKqqr9nx3ty/fUsBsXt7lt0tbIrow60wkLH87Az9NSpWr6PtxhQG0kccVtFVk99TqRioxUV5ClKVk2FKUoBSlKAUpSgFKUoBSlKAV8uIC0kGvqlAR/q3RzdzbWQgFR8qhS+7Ky44rejJc/KTmrUqQlQwRmvG/b46gSpA+FaOPmg0mtNFMr1oeNpy3SZ8mMy02yneKikc+4DzJ4VDj765Ly3V+ss5x4eVTd0j9ZsT783pu3KHo0DtylIVwW6eSfzQfifKoNro4tbjHml3Z5bil8Z2eHBaS/MUpWSsWnbrqif9j7NCdmzSgrDTWM7o5njVptLuc1RcnpEg6J2A6m19pyNfrZLtTcOQVpSmQ4sLBSopOQEEcx41GMqMqJKfjr3Stlam1FPLIOKvfsC09c9MbL7XbLxDchz2nHytlzG8nedURy8iKqjdNjGv37rcHkaWnLbckOKSobnEFRwfWqtXduTUmdTKwOSqEq4vb7kc0rZdRbPdU6ThIm3uySoMRbgaS67u4KyCQOBPcD8Kwdvt0y7S24dviPy5bpwhlhsrWr2AcasKSa2jmOuUXytdTzUqUGOjztFkRw8LBuAjIQ5KZSr4b3D31ouoNL3nSsz0S9WyTBfOcJeRgKx3pPJQ8wTWFOL7M2nRZBblFoxNK2ew7OtVapt/p9mscqdD3y31rW6RvDmOfmPjWAnwJVrmyIU1hbEuOstutLGFIUDgg1lST6I1lCSSk10Z563zZFs8RtM1abO9NVEjsx1SXVoSCspBAwnPDOVDjWE07oTUmrY70iyWaVPZZVuLWykEJVjOOJ8K9mnIWu9La49F00xKj6rjIUhUZCULVulO8UqScpIxg4P6RWk5dGk+pNj1+/GVkXy/mbdtw2PxNlirS/BuL0uJcC4jdkABaFJAPMcCDnw4YrWkbKr9MgQ5lvaTMbfZU6tLKXCtvCC4N5KkJI3k4CeYUeROa52oTdpFzk2x3aG3IZUEuCG24022nHDfICPzedYJ/VEx5TTiWYrUhLYbW8hskvAJCQVBRKcgAcQAc8edaw53FdSbI8BWyXK0vQ2mHskvrjdvVJtF0a3n0CV9xIAaUpsZTwyCAvjkdx/FNYy1bP52pb45bbMd4Mw48pxx4KUE9Yhs47CSfWcxy4AZJwCa1X0uR/0h7j/ADzX2zcJDEZ+O24UtvqQtZHMlAUE8fDtGtuWXqQKdT6cptVk2cXq4NrlLtVwfgdTvodhsle8ShSgRwwoDcIOO/A76wDmnLmLo9bWYb0qW0+5G3I7alla2/WCQBk4HHlyrqnXufcZPXvyVb+6lAS0A2hKQAAEpSAAMAchWV0xqqdYkyGIbaXZD6gpham2lqZe5BaStCik+aSk8Bx4CnvJbMrwpNRSZmLfsl1G46w5cLZPjwd9HXLaircdQg9WSQgDJIDg4fzVfimvq76DkWGPcrhEYuLLcAErklzKErS91e7vhCe0d5Ct3gcZ8K+IOirpLZbdXNlJePFQSonHvz51nrRsqVMkNofkTFxyrecb3sBZ86rPJhvqzpQ4dbrpDW/iWu2SXiReNCWKVNeL0t2KguOHms+J88VvdafoW3i321hhtsNtNoCEIAwEgDgBW4VU3t7PQQi4xSfkKUpQ2FKUoBSlKAUpSgFKUoBSlKAUpSgFR9te181oDSE24ApM1Y6mI2fwnVDh7hxJ8hW+PuhptSieQqiO3TaEdd6xdbjub1ptalMR8clq/DX7yMDyAqWqvnloo5+V7PU2u77EayZL0yS9JkOKcfeWXHFqOSpROST766qUrpnke4rZdn+0R/ZhqYX+PbUXFaWFs9Qt0tjtY45APh4VrVfC0hQORWslzLRvXN1zU490foZsi189tM0JA1I/ATAdlLdSY6HC4E7iyn1iBnOM8qr3cumZd4NznQ06JjOJjPraC/sgob26ojOOr8qlzoxAJ2NWbHD7rI/bLqk17Qn7O3XgP+VO/rGqVdSlJp+R6HLzLKqa5x7skLaX0hLhtZsUazStOM2xtiWiV1qJZdKt1Kk7uCgfj591T10WtKRLbodzUbjCDPuTrgS8R2ksoVuhI8ipKj58PCqbdgd6c1v+zHZbrbaS843aL3OttjiqKHJBlupZQo8ShKEnirjnHAeJ4jMtlfLDSfQo4mTKzJ8SS29dDeLx0xtTjUzqrVYbadPMvFKW5G/17zYPMrBwkkcuycedTvtXtdu2j7G5d2S1hQtwusNwgb7ZDfWAe8dk+2tDj9GDQGmoDX2w6mk74T23HZDUZs+wKBI/tGpcvsKBb9kNzh2p1L1rj2J1uK4lwLC2gwQghQ9YFIHHvqu3FNOB1a43SjNX9mitfRT12bPrCXpeU4r0W9I62NlXBL7aSSMd28gH+wK+ulRo9Vm1hG1Cw0BDu7YQ4Ujk+gAHPtTu48cKqAYsuVbJEO5QXVMzoS0vsup5oWk5Br9BtNmFti2d6fuOorNuekdVMMZ5PBLqFcFJ/mqxw8UqwedSzbrnz+pRxUsvHdD7rsa/sytsTY9sWNzuiFMuBhdzmJV62+oZSjHjgITjxqvvR3vEvUO2+PdpyyuXPEqQ6f5ykKPDy41u3S81tcEOWvRcZh1mBIQmbJkcQl/CiEtjxAI3j57taF0ZkhO1u1Acgw/+zVWIRbhKb8za+xK+qiPaLRv3TEP+X6OHiiT/AOnVa6sn0xf84aN/IlfpbqtlT4/1Ec/in+Zl9gpSlTnPFfSFqaWlaFFK0kEEdxr5pQyvVFydjzNr1tpaLObQgSkfcpCPxXBz9x4EeRqVYukYkZQUltINUx2F7QjobWDTcpzdtNyKWZGeSFfgL9xOD5E1e5lwOISoHmK5VtShLXkeuwMr2ipN913PliOhhASkACu6lK0LwpSlAKUpQClKUApSlAKUpQClKUApSvBebrGs1ukzpjyGY0dtTjjizgJSBkk0MN6W2Q90jNo40ppj7Ew3cXW7BTScHi21jtr+nA8z5VS0DAraNoWs5GvdVzby/vJacO5HaJz1TQ9UfWfMmtXrpU18kfieQzsl5Fra7LsKUpUxSFfKhwNcmuDnFAXj6MZB2OWYA8Q7IB8vuqqpTqRpca/3xpwbrrUt5CknuIUQalzo9bcYOzt6VpzUrjjVklu9dGlgFSYzhGFBQHHdVgHI5EHxJE8zkbFL9c/thlXHSj8zeDi31TmwFKHIrTvYJ4d4qipOub2u56GVKzKK1GSTR9iGzD6OinZUZtqQjS6lKK0AKCvRjz8817di7CLPsUsb0RpJdVBXKISPXcVvKOffwqGukR0gLLfbC/o3SMpM8zClMycz95Q2CCW0H8InABI4YJ455eno57drFaNOM6P1TOatz0IqESVIO6y40STulR4JUCSOOARjvqPlk4bLUbao3qCfZaKt3B+4aomO3m8TXpVwlHrHHXVkkk93kByA7hX6Bxoj0Do/NxZCFIkMaY6taVc0qEXBBrTLrbdgmmJLmonZVkW+0oyEsRp3XBSufZYSog8e7GK+4W3zS2uNl98dnXS3Wq5zY81hm3vyEh0JwtLeRn1lJ3Tw4ZNZnLm1yojx6nS5u2a2+xWnZJos691rabOpJ9EKuulEDkynir48E+1Qqy/SJ2wydk8HTtr08GUXF55D62QkYREaIyjHcFnsg+AVitD6MeoNG6PtV1ut81HbIV1muBltiQ+lK0NIAOcHj2lE/wBkVEm2LVydf7Sb1dG3G3YDK/RIa0HKVNI4BQPeFHKvzqlknZZp9kVKprExedP3pFrNsGmoe1zZRHvdoT18lhgXKCpKe0tJTlTfjxT3fjJFV96NBztctR8Y7/7NVSF0atrtksejZun9UXyJANukExDLcCAplzJ3QTzwre9m8K1DRF30rpDpDyZce9QEaYSXlsTOuHUhLjZITvcuBVu+6tY7jGUGSXclllWRF+a2bV0xT/l+jfyJP6W6rXU79KPWWn9XzNKqsN4hXIRkyA6YroXuZ6vGceOD8KgirGOvcRzeJtPJk18BSlKmKIpSlAcHjkVdXo6bR/tt0uLXNe3rtaQlpW8e041jsL8+WD7POqV1tGz3WcnQWq4N5YKlNNnckNA461o+sPrHmBUN1fPH4l3AyXj2pvs+5+jVK8Nouka82+NOhvJejSG0utuJOQpJGQa91c09entbQpSlDIpSlAKUpQClBSgFKUoBSlKA4JwCaq90pNo/Vts6PgvjrHQl+aUK5IzlLZ9pG8R4AeNWI1LeW7LbHpC/WSMJT4k8hUBTMTpTsqShDj7qt5a1JHE1RyeJQw5ra2zf+77MytwjLl+JVIKGO6ud4VYybcIzTqUsMsFIOCSgdo+ArJxBDlt76GW8943RkGqFX00otsdcIdV8e/y6Fef0KthFTlZ0fw/UrAVDxrjeq0E+Ix6DIww1nq1fgjwrQLlHaTb5RDaM9Wr8EeFQ5f02jj2Qr8HfN8f0J8T6CyyP+dr7P1Ie3qZyK26PERIkNNEtthagnfVyTnvNZaTpdyJc48Rzd6p9QSh8IyD7quW/S2qqXJOGnrff0+w68v7M+R6llf7f1I0fjIfSQsZHnWNNjYJzujh5VLyNKuO3d6C0UlDON94owBkZ5eNYmXDRFkvMZQvq1FO+nka0q+llF8uWENvW+/l9xvV/Zu30hl/7f1NEjQm4w7CQKSILckdsA14NQEpvEoAkAKHAewV8s2a5PtdYiM6UeZAJ9x416mN9brjObS2vM+c3cNyY5VuPTFzcG1tJvs+/Q9LdnZQrO6OHlXYq1slYVujI8qwrqHWVlDgWhY5pVkEV1OOqQgnePxrecoQg7H2XUhxsfIycmGLFe/JqKXxfQz7tradUFFIJ9leppoMpCRwxWlBC1Zwvl4k11OpKk7pUefMGuNDjD92Uq9Rk++z6Rf8A2cR3dRRmKd1UduHK9/fvz8jc5MJuScrANcegNdV1eBu1q9nYkOTGm20uup30k7oKsDNXXhtQ7iophIYlKBwQwA4Qfzc1PxHiawuV8u9niuG8Hlmcy5+Xl+BVONDai+oAKyMOLIuMpuLEYdkSXTuoaaQVKUfAAcTVuGtBXuWlJi2dCc976Qjh762GwaAvtmuMWd9jba6tolWFSOrweOOIQryqri8bnfPljS0vXyLd/wBHIwXNK5N+muv5lOr1pK/6bbacvFmnwG3ThC5LKkJUfAE9/lWGyKuHqhMjT8W5nVGoLGiPLSVIYm3NZ6hYVlKkAtk8jjHf41oenVQNXSSxYWnLnujtOx4bnVD/ALxSQn6a6U85QjzTXQoy4M3JRrlsrxkVzmrfI2LXq4tqSpUaE2tJSd9IUrj7DWOtnRItzDazcdQuyHOyUdWx1aUkc8jeO8Dy7qjxuJxvlJcjSXm13+RrdwO6tR5ZJ7/Ai3S+wK532wMXq5Xq32aLKAVHRJyVLBGQTxAGQQeZ91R/q7Sdw0XeFWy4dUtRQl1p5lW82+2r1VpPeDV15ezUzLVFt94v7DkaK4XG0MwwylPPHDfJ4A+OPKtZ1dsW05rBNpRcdUOJFrbLDSmw2FqbyCEKV3gYOPDJqaOW+b3uxNbwdeGvD+sal0XtpBUhzR893tthT0FS1c05ypsez1h5E+FWiByM1Wm1dHmzWC+RbvadcKjyIjqXWkqZQvBHcTvDIPEew1Ya0z25scKQ627ukpKmzlJI8KhtlFy3E6GDG2FfJauxkaUpUZcFKUoBSlKAClKUApSlAK+XFhCSScYr6qNdsmvEaO0s+WXALlLBZjJ7wTzV+aOPtxUdtiri5y7InxseeTbGmtbcnojraFtUjXTV7dgisqdZYeDKngrCes5Hhjjjl8awF8dkIQEpGGFcCod58KijTKSNRW5ZJJU+kkk8Sc1NziEuIKFpCkKGCD314LiinmKWpab/AHo93mYNPDJVQrW+nX4v1IRvUuWucQ+C2Wz2EpPAeYPf7a3DTE6e4y0taPup4J8XB5ispdtNIefaUGA8gHs5/BPgfKs9brYiCjPBTpHFX1CuL4c74woVfI4d3/T5l3L4lTPHUYx6nTqKQ5E07dJKQkOtRXHADxAISTVfWNfXSe6iK96N1bx3FbqTnB99WOnpSuFIQtIUlSFApIyCMVotzt8Ru2y1JisJUlpRBDYBBwfKvZ8Nwca+mc761Jrs35dDxORxC3GzKYQbSk1vXzMHC03ClQmXnLmhtbiQSg7vZPhzrarVEbbihky0TUNEFCiASjw4g1Gkdtt2Q0h1zqm1KAUsjO6PGtyYu0WJMhWu17pYKx1jo4759vf7a8PxfFvmuVTcu77LSS+J9Ny6pvpvfn27GcusdLsdbYmJhh09tYAyryyTWqSdMwWIzrqLolakJKgns8SBy51lJ91jOXOXa7klPoit3cc/EO6Pr760uay0zKebZdDzKVYS4PwhWvCMW+K5edx7PsmmvmYxKrIrW9efbuarEtjcm/3CU4kKDKkhAP4xHOthxwrJaE2b6q1bdbk/bbaTa3FgelvKCG95IAIGeJ9wPKpXhdG3UD4BkXKEyDzCApeP0V7/ACse+6UdLa0tfccXg/EuHYVNilJRm5z5vVvmf8uxXjVMFuRAXIwA6zxCu8jvFR+5vOOIQgFSj3Acat3rvo0X2Lpd9dkWq8XJSgkxUrRHO73kFeQfYSK1rQ3RBvs8If1teW7LDcT2oFtWHJCx4LcwUjzA3h7K6NFF7w3jyetv8Dz2RxLh1PHo8Wrhz8semum59tv5Iri1C6mQGX1OelLwlESO2Xn1qPIBA5HyJB8jU27P+jRrbU6kSZFkjaeglIIkXtRefOe9MdOAPyXMe01cDQ+zjR+zyOlrTthaYe3dxctSd99z8pxR3vdy8q3FT0hQw2x71Gp6sSqEFB+9r1KWd9IszKybMmD8N2JJ8vTaXbb7kL6f6MOibFGQ7f5My9hkb5RNdDUVJ7yGUbqceSt6vFe+kDs92dx3bVo+2R56oxV1jdsQhiI0QM9p7ARx5AjOTwqONuWh9uW0HVq7RDiOu6cLieqLUtDEMo5hTgzvkg8+fEDCfHZNCdDS0sJhTNc3Jy6SWPVt0NRaiIH4uRhRGePZ3PZVp7lrZ55LT91GpSuklrvX1yctuiWXZcpYHVt2mH97yPw3XgocDwJ3AD3EVuuntlu2zWrDDus9dOadhqO85CtiguSod4LicJQT5FQHhVirFp206XtzdvsttiwITQ7LMZoIT7eHM+dd10mvQbfKksxlPutNqWlpJ4rIHBI9vKmkbKLfdkc6b2A6A0nvS5FsF2n53lz7056U4SO/t9kH2AVh9TdJHStkmKsmlor+pb02S2ItrR9xbI/GdxupGeGRnB54qi21DpNat2rakFou816w6VTI6uTBiAhXVhfa388VqAHqnAyOWa2nUO2KxaLX9r2zhy3TbTISMyExnG3UKKTklSjlShgcSO+pIwb7kU7FDpFEuPbcdda2lOQ13hmwRgVreFsbSpxKQd1KEuL3s5IUd9OOXAcaxno/WqJnas1bOSriUPXl9KT+ahQFVxY2gI0rmS5GcebdQhlIC93d3d4/XWzWra3ZrmllJmejvu8OpdBBB8M8q25EQSunFb0S8/prSbyyt+3rkKPNcmS86T7d5RrBzrDpa3pU4m0W/cJ4BbPH41gjqZrH39J99ahrXUiW48d0TI6EBRylbmCo+Q7+/wCNZdWupFDJ55KJtt5Tp9NoluQIEWPcWkFxpbbQAyOOPhmpY6Om0drTGpvsFKkj7HXhaVNZPBt4jA9m9y/s1UGLruEFrL8ooASd3sk5Pur3x7+QYjiHFBbeChSeB8Qf0VryrWiztpn7ApUFAEV9VEPR92qs7TtERpLjyVXaEEsTm+8LA4Lx4KAz7c+FS9UZaFKUoBSlKAUpSgFKUPAUB55spuHHdedWlDaElSlKOAkDmSa/Ojaltbum0DXlwuDCjH05CKo0LrCPuiEni7gjhvHj7MeFWE6Wm2GPo7TidNRn/wD6neEEONoI3ksclZ8Ar1fYFVRtSLpqxwOvH0eF+CMYGPId/t5VNXRGyLdi934la3Mux581E+RrzXf7Dd4OrZy1IlWyejr2FbySEJOFDlkEfVXLu3XW1ueLUx1RWThOI7WD7Du8a02VpaZbHEvW5xwOpAJQvgSPHz9lfULWDPVKTPaUH2+W4M7x+o1ssDEktxrT+wr28RzrXzStlP5t7RJtu2tazlNl1+SI6O5K2W94+0bvCuRtc1NNDgiXtouN8CEsNHj/AGaicybrqpS0sYjwkEBeDw9/j7K7ZGlZMMNv2yQvr0DiCcFXs/wNavh2IukoJP5ELyslP3rmn8/zNzm7cNZwHlMz5CurVkdlhrCh5HdpC2ragvgWwjrCwoFLi1NthIB88forUoeoGZSVQryyG1+qStOEn2juNdUzUmCmDZWd48gpCOA/JH1mp68SmuLjCCW/uNJ3X2STlvmXZ76G6vahebcQwuY2h1z1UkJyfdisRP1ffrE6l4KUtpJyHW0J7Pt4cKwDOj35DC3psoiWviPwsHzPf7q4YulwsKkxroyXoyuAXz4eR7/YahXDsWXTkTOguN8S/wBOTKXw2/wMvK2mz57rXVLfdkOcFbyElRPcPOtm03Mul2ucGHLlJZEhRKxupy22kby1HA7kgmtFdu1st5JtEVLsx/lupPZz3f8AsK37Z7pS7KtN9vc9t5Uy6R/sZC3GVOFvfWkuLwnJCQhKkkj8f24gycTDor5nCMfTekWcbi/ErrIw8eaj59W3ok3TOobkxeDqi0zJEBTuERWB6iYqfvba0ciCOJ8znnxq2+gNextZ2NMpSAxOZIbksA5CF4zkHvSe74d1VbuGxVNljgjWkRO6gFLa4rzYAx491avsR1rItO037HSVzW4tzbXE3nEqShbie0hXH2KA/LrjYEcvxXzr3X+B67jkuEvEUqLE7I/B7frsvo9NShpSxyHfVS9qevrnq3aAmJabjKg2/TigsuRXikvSVDgDjuSnOQe9RzUt7R73NtL8aR6UpFhixZD8xtp1KFrKUZQOIyUk9nAxxUKrTpTZptPlWRF1j6ffU1cVKllQdZCl75zvEFWeNTcRsuVTVKe+xV+j+LiWZCllWRSS3p+fkWg2T7UnNQdVZL4tH2YSj7jISMCWEjiSOQXzJA4HmMchLBdRnG8M1+deo71qzQN0YTc1KtV5Z3ZUVp9SErUUqyngMnBKSPPiKupoPVqtX2KPfWypTEyO3JZbIAUkKTndPn3Vvw6y6yndy016+ZX4/iY2LlKONNSjLr0e9EglRxwSTXSt9SASUEYqEbftmvS4YmSmIBJlNNOW9lK/TI4UshSC2cZVgDCuAyeVZi87bI1qZt85MUvWqchRbX1yUP743gU9SePApwSSME99T+01622VHwvJUlFR3sk5VwwcV0OTt8EKUSCMEVE0zaxOjvZn2SPFZSpDTkhc3KG3HEFbYJ3ORGAT3E4486ymite/bgiYfseqIpppqS0S8Fh1lzO6TgDdV2TkcceNYllVruzEuHZEY8zj0+aNI190X9lep5N11BcbG+bo/vyHXWZjrfWL55ICt3j44yaiFno17M2ZHWMwbyyhScK6meSoezeSfCphs21Kfqa067EiAwymysrDfVlWXODnPP5I+NaZppm/32Ci5ywmBGkI+4Nlah1uDniAQQkjPHnXPysuxuPgS7nbxODwqqslmRW468/Vb6Gr3not7PLlFYQmZqpUcDeBalNHB88snjX3p7oI6Cv0Ay06j1JFVvlIbddYUQB/3QqRtPaik3udMss1NvjehoSUmFJeUrPeMkg+HLPnjhnru+1O+bNZrcV61InWdaiW5CpSipfDlkg7pB7jngOHlnHy5R622bRUlw5ZGqcapqb7J9On2s1T+ANp5sK6jXd7T4b5Qr9CRWLl/wDB82+ccnaJPUU8El2IlzA/tipatu3pF4gGZCsxdWj14/pAC0/7Pw8azB22xRHgFuxyVvSxktpdH3PgM7xI861/4hwVLkdumvXZUlwDMg9Orr9hXp7/AIOdnB6naPx8F2sfU/XwroE3yO0ExddwHi2gJQFwyjOBgf6Q45VNuoekfZrC6tp21zH3GxvOJYUk7nlxI4+VcWzpKaZnsB5y03hgEZAUhsn9ertXE6LK1bCfQPgWdvl8J71v7DWdiPR715sZ1aLmzf7TPtDyOpnRAVtrWnmFAYIKkniOPEEjhnNWzjPJfZStJyCM1XKd0k9KRz2YV13nAAcNI4YPP1vOt62S7WLJrpcyHb33OujHPVvp3F4PgDxI8+XGp6siFr9x7K2VgZGGo+PBx322SzSgORSpyoKUpQClKUArC6r1DD0vYZ91nObkWI0p1ZAycAcgO8nkB4msypQSCTyqkfTG2szpMprSFkO9DiYduT6OJDnNDfsAO8efEjkRW0IOcuVEds+SOyCdoF0b2k6ruV5uUgpuU5e82nfH3JsABCAnlgADzPE99ae3Iuul3Ah5Bfg54Hux5H8H2V4obdqfgPPSpshFwHaScZ4+zv8Abmszpa8ypLvUSovpkTG6pajgpHme/wBnOug9xi1rev30OTKMltze157PO/cblqZwswUKYiclrJ5+0/UK9SYNksLaWZqkOvOjCitOcD2dwrKXa7xrJanWWW22n1/eQkerx48PrrQocGXeZRDYK1qOVurPAeZNK25J7XKkaxipx3vUTYZNgk29Xp1kfUts8dxJySPL8YeVcp1o8YvUpiH04ndxjs58cc8+Vecouuk17ySH4asZx6vw7jWft1wgXTflxWkC4BPFKwAr2Z+ukmtba2ayfTbXMvX+ph4unXZi1T70+Ug8ShSsHHme4eQ+ivqVp5iWgTrG+EOJOQlCsDPl4GsdOlv3G6Jj3Z1URgK4oA4Dw/8Amvh9aLPdEizS3HirgpAGQT4fzqk1J9d/0NtT3vfX08jLw9XvwkuM3FhxMpsEApGCryI+uvKpq7aowpzLEEHIGOHuH4R862JQjSmIirrHZRKJ4NrUDx/37q8Wr585mMhuKwWYuO28hWT7P5o/3zUCluWoR035mK5R30Wn++x7NK6JgXvVVjt8WUvecmNMvpSvtFJUArlxBxmv0miMWuywGGYMJmOEIAHVoAwPAV+dOwNy1t7X9JrS66BvOBXXYA6wtLCRw8yPoq/D87kkqGQMVVzYKTUZ9dep1MRNJvZmHroVDHWOe6sbMn4QMuLIJwAfGvD1yifKsdIlFdxiNZ4FwHHs41XT10LTNsuOgbLqGETfgJraxulkkBBHPB8eIzxrwv6I076IzFRDmMx2E7raItyksBI8urcTWQennqUpB4AfCsaqTvHnUUMeEZuxLqzZzk1ps0m/bBdn2opQlXOzXCZIQndS7Ju8x5SR4ArdOK3fQumrVoWxCx2YPsRWt4tB51Tqk5UVcCoknBUeHsr560AcK6XHSeSiD4g8asOT1rZooRT5kuppt20tqtV1tlwmvQ7rObcbjtSWmd3qUJUVl91O8nePAJCRwya12Xo2+PdYtEGV6QvK0KDDLe65vOKBCzIUUJ3nSSADyqUUy30cnVCuh+a6hKnFvYCQSVHGAPGqUsWDOxDjF0ElpGpjQTgurSCZBsy9xx4rdcMngggtBZOdwr3V+sOKeVeW33FvZwzNfvt2hMqcaYjstLeDfWJQVEuq3iO2reyrz7zVY9uHS+us2ZK0/oKWWojai27dkD7o6e8N/ip5je5nux31cluTb3Ndl3SfIlTHlbzjjqy4taj3knma1u4erq3BS1vzNHxex9JLZ+gey/VVjlOaxSzPty1ySShtUlv7sD1hwAT2vZ51vs0I1ZZ+pjPORpTBStIbO4pBHh5EZHvr8u1WtbQCiXm895GK3zZ7tm1bs0mxlxZrk22NHjCfWVI3e8J70+7h4g1zbOCW1y8Sme/VPz+XoyzdxxZNjnZHXYuPprQ91a1AHnFuR48Ve916eBc48gPPvz9NbpriXbWLBNTdkhcTqlLWkJyQEjO8PMV59C7UbFtK001ebIVLmuDq3oCjhbbg7j3DmPaCDXVN01Nva1xbtaZy4ssdU+pDyEkIPA4Pdwrh5MpUzjjUwk3J9X6Lz+06lmbZevaHJJxXT4sjTT1y0y5ckJsSp63yO0d1W4E/zs91bbLmobYcUN8ndPBv1vPHnW0W3Z3puxW9+32633eOh7O8+H2lOZP84+Hd4Vz8mNgUbYUuX1k25JCN1xo9YDgEL8eVQZv0VtuyXKtvlXbb2308/Tr0KdH0iv8ADTynzT89dNfD4kDO3jRcluQA9NRKUDuh5KuK/PI8a8a3hyQrh5VOuo9iOjtTzBKd+y8N4jDimerHWHxPPj51yzsL0nGZSn7LXtWBzWlB/Qmu6uD+HTB1N7fdN718mdPgf0qnG22PEnuP+lpeXo0QMlAeWnf48+Nddm1TN0Xr23Xi1b3pMVSVFocnQeCkY8xwqeHti+m1raS3d7wkKUR2UI/FJ/Fr02/Y3paySlzUz7lImq9RbzIPV+wBI+NWcKvIw3O3k5nrSW+7IPpZxTF4tiwxsaWnzJ7a7JFodPXli+2mJPjk9XIbSsBXNORyPmORrK1EWzR9qwOLtomvPMvq3mw62U7qscRnz/T7alxKgoZFdbFsssqjK2PLLzXoeQsjGEnGL2vU5pSlWDQUpXW86Gm1KJ5CgI92zbTIOzDRU68ynEB/HUxWlf6V5XBIwOOBxUfJJr8y5zd2VcJN7izFznJrin31KO8p1SiSSfHj76mjpDbTrXtW1fItjUsKtFjcU0yQ5hLqwe24DyI4YHkM99QjLvDj5TbLE0UoHArQMe3HgPOr1FbivizlZFrnPlj2XffY+YbNovshBWhUWVntspOEuHvxWTud+iWNn0WKhKnkjAbT6qPbXRDtkHTjSJdwdSuSo8CeO6fId/tr7uemol2bMuC4hDixvZTxQs/VUz0317FNyrc/eb5fwMbA0/LvTvptxcUhtfaH4yh5eAr1yL2hvcttiZStxXZC0jh7s8z5msXCu0/Tsj0WS2pTPzau4eKT/uKy0uyQ740ZtrdDUnmQDgFXmO41l9/e7Ek+ktz+r5eh51Sbtp0gXACTEePElW9gnmMn9HKu1djjXJoXCyP9U6k5LYOMHngeB+iuuJYLhdXw7eHlhtrshJUMqx9AHnzrsuWomLe0INoQjeHZ30jIT7PE+datdfd7/gbJ9dQ6vz9Dzi7tyQbdf45S42cJeCcKR58P/iuBcodqUI9mY9JmK7PXqGT7v98VzbdMrkEzbs4pKD2ihSsKPmo91dkrT8i3rE+yvlaCM7gOTg+H4wrZKC6L9A5VuXLv+gb0vNnoXInSVCSscBnOPb/gK4ZuVy06sR7g0p6KeCVc+HkfqNeqLrVlMZZkMrRKTwLaBwUfq99eJSLlqUdfKcEW3J7Q3uCceI8faaLm37/YwuZ9LV0/fY9a9Q2+y9VMtASiaFpeQW04KVJOQT4ce6rKaa6RVgvdvjG8NSbZNKAHCtoqaUrHEpKcnHtAqr4s9ruSeqtkkomM8Puh4O+f/wAVw1dHIz5h3dpSVp5ObvH3+I8xUNtSsXu9yemzwlqHV/HuXKjbWNIynOqY1Nbku/iLkBtXwURXuGqYxmRZkecxJbaWFK6t5K8p7+R8Kow8XrvILECOQ33rUOY8z3CvQdKMMthpT27KXxBBx8B3iqrxnHuy37XFLUu5+kT91S+hLrGFtLAUkpVkEV0C5oA7aFCqLaS2l7QNGNMW2HcW3rawOw1KaDiAnwB4KHsBFbY90qLzDfQ3LsMGYB65YfU0R7MhVRypku3UlhkQn0TLei6sZ/CHtFfYnMK/0g99VWi9LGyAD0+wXFlR+ZdQ4Pp3az1t6TOkro4lpEe7oWo8AWEqz7kqJ+itNNEykmWL9NYJx1qPeagXpbbQ1aU2Y/Y63ykInX50xDunKgwE5cI9uQn86ve1ts0c8dxy8ojOd6JTS2iP7SRVc+lRqG36sn6XVZ57FwYjNPqcVGcDgbypHPHL1e+sJNsNpIg7T1il3efBtsFvrJ091DLYxntKOB7qv3sS2I6HY0UsQpEedfJkVQVdig9eytYUkONBQ7KEqB3VAHeKScmqs9HeLGf2safakuBkrW4htwJ3ihwtqCSE95Bxwq3V42YRtntutmsL5reXcY9htrdshxVratcR+OUlAQooG8rsLUocQSQOI7pJbI49erNN2A7ItZSLtrBO0pV0lQYwMGMzclFxl5W/kvNBeQpISkYVjB3z4VAG2bSeimL1epOgLkiXGtjqWp8ZpOGmlKJG80cnfQCN045Hlw41czWGodlf2PtsNFwjMNyEfYKRKXcZLPVR3Gy4eqXnC+C8hRBHIEgYxEuuujBozZdoLUmorNebzIS9BUhpMp5pxlW8pJSQUoGSSE4INEbNFbdiGpJOmtbpisyVssT2yMA8OsSCpOR396fzzV+9E7Q2NVsGI+UNXRhOVt5++J/HT9fnX5waXWqHr3TLiE75FxYG7n1gVpBHvzVsdN2u5yb3HNqJbntneQ4DgIA5knw/3764fEr5YmVCcFtS6NHpuEY9edg2VWvTr6p+m/5FmASc8K53u7Ga170idhO91ql4G8UgYJ7yBk4omRLHc/8A2a7C21s861p6NgKt3urgneNYQSpnMpe8PUrkzpKCTh7h/wBXQwZYq3JTIwN0IWr38APrr63woknvrXWplyclPOKbdDYwlH3PmOZPLxOPdXaq4ym+aXif6I/4Vh9ewM4p8tkKQcLSQUkdxqWNLXxF4t6F5HWp7KwO5VQOq5y1/wCidHtaNZ/Rup3bRd20yErTFkEIUSggJPco0W0GTxSutlwOoCgeddlSGorStpQnzdL3GDbJogy5LfVpklG91YPrEDI44zg9x41utYi7Wz09BSRzp26ow0pLTPzq1H0elolqU1dUJXntFMc4V7t7ga7oOyZ22Ry1FfQlRHFSmiSo+J41duRs6ZfcKlIBz5V1fJpG+bHwrLyLn02QPEqkuV718yiTmw24T5ZfnXfrs/ghgpA8h2uAr7t+xe7Wp8qi3lPUk5LS2CQR8efnV6vkzjfNj4U+TSN80PhWfabvU3eNU1ytdCl0zZU7Pa6qQ424nzbOR7DnhWBY2HXOFKL0O8hoZ4BTBOR4Hjxq9/yZxvmh8KfJpG+aHwrCyLl5msMSmC0l0KO3PZFe7m2G1XhlprHaQiOrtHzO9y8q5tGxddqIX6Sh2Rj74po8PYM8KvD8mkb5sfCnyaR/mx8Ke0Xa1seyU8vLroUbuux273Z0By8IbjA8GksH6ePE1za9jd3tLn3G8oWwTxaXHOP1uBq8nyaRvmh8KfJrH+bHwp7RdrRn2Wnl5ddClMrY8JcpEl0tKdR39We17RnjWOuexe8XVwF28toZT6rSI53R/tcTV5/k1jfND4U+TWP82PhRZFy8zEcSmPVIoi7sEf3WjGuRadRzUWic+fPhWSRsinSIwYuUxqUgeqsMlKx781dz5NY3zY+FPk0jfND4Ud9rXVmzx6n3KVjZTMixOphyGWTyBLJIHnz4msC7sJuUhS3XryFvk5C+oPD6avl8mkb5ofCnyaRvmx8KLIuXZmsMWqHVIou5savjkUMKvje7jir0c7xHhnerzRtg7kcFTsxL7vcSyQke7NXw+TSN80PhXPyaRvmh8KO+1rRt4FaWkj89bpsFkOLJbmpQk80lokfprDnYHcm/UuyR5Fg/vV+jj2y+M4PvY+FeJeyaOTwaHwqNzsJFCKWj8707Arm4QHLugpPPEc5/TWVa6P0x1kspuDbbZBBAYPH28eNX6RsnjpOeqHwr2N7LoyR97HworLEHXBn5+2rYJe7Jco06LfG0SIziXG1pYUClSTkEcfGt+2uaNv21OZZbi7qCZDlQYyGFxBlUQKSN0rbRw3Soc8549+OFXGVsvjHk2PhXwNl0f5sfCsOU2ZSSWivO1iJb9pOzeLpaPb3rY/b1MrgywQrqS2nc5DHNBUnn3jwrQ7hoO5HZtA0HaLrMRa2HPSJDs1anVPu+CUZw22OYSO/iTmrhfJfH+bHwr7Tsvjgfex8Kc0zOkfn5auj1crbe7fdDeGlOwH0PtpMclKlJUFDPa5cKmC0HWlgaU3AvERlKzlRTb0kk+ZVk1aT5MY3zY+FcfJfH+bHwrSUeaSnJbaMqTjFwjJpPuVxRqfaS16upGfZ9jmf3a+l6w2q7yep1NDQj8LetbKif9kVY35MY/wA2PhXPyYx/mx8Kk55/AiVUU97f3le1a32pbmGtSQQrxVamSPhiutnWu1cOK67U9vUjuCbQyPqqxHyYx/m0/Cufkxj/ADQ+FFOaHhR1rb+8gA682oJ5ahh//rGf3a8yNabWlPby9UW/qs+qLQznHtxViPkyj/Niufkyj/NCinP4fcYVMV5v7yABrfacOB1DCI87Wz+7Xrt2o9pVyfDatSwGwTzVa2iP1anP5M4+PvYrtj7OmY7gUlGD7Kzzz/aMeBD1f3me0A9cxp+IzeJjUy4oBDj7TXVpXxOMJ7uGK2+sRaLd6C2EgYArL1lEiWloUpSsmRimKUoBSlKAUpSgGKYpSgFMUpQDFKUoBilKUAxTFKUApSlAKYFKUBxgUwK5pQDFMClKA4wK5xSlAMClKUApilKAUpSgGKUpQCuMCuaUAxSlKAUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgFKUoBSlKAUpSgFKUoD//Z";
+</script>
+
+<!-- 2 · xlsx writer -->
+<script>
+/* =====================================================================================
+ * TAXI SHARM — MINIMAL XLSX WRITER
+ * No library, no CDN, no server round trip: builds a real .xlsx (a stored-entry ZIP of
+ * SpreadsheetML) straight in the browser, so it works inside the Apps Script web app too.
+ *
+ *   TaxiXlsx.save('name.xlsx', [
+ *     { name:'Sheet 1', cols:[24,14,14], rows:[ ['Header','A','B'], ['Row', 12.5, {v:3, b:true}] ] }
+ *   ]);
+ *
+ * A cell is a string, a number, or { v:value, b:bold, m:money, t:'title' }.
+ * Numbers carry the 2-decimal money format unless m:false is passed.
+ * ===================================================================================== */
+(function () {
+  'use strict';
+
+  var enc = new TextEncoder();
+  function bytes(s) { return enc.encode(s); }
+
+  /* ---- CRC32 ---- */
+  var TBL = (function () {
+    var t = new Uint32Array(256), c, n, k;
+    for (n = 0; n < 256; n++) {
+      c = n;
+      for (k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      t[n] = c >>> 0;
+    }
+    return t;
+  })();
+  function crc32(buf) {
+    var c = 0xFFFFFFFF;
+    for (var i = 0; i < buf.length; i++) c = TBL[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  /* ---- stored-entry ZIP ---- */
+  function zip(files) {
+    var parts = [], central = [], offset = 0;
+    function u16(n) { return [n & 0xFF, (n >>> 8) & 0xFF]; }
+    function u32(n) { return [n & 0xFF, (n >>> 8) & 0xFF, (n >>> 16) & 0xFF, (n >>> 24) & 0xFF]; }
+    files.forEach(function (f) {
+      var name = bytes(f.name), data = bytes(f.data), crc = crc32(data);
+      var local = [].concat([0x50, 0x4B, 0x03, 0x04], u16(20), u16(0x0800), u16(0), u16(0), u16(0),
+        u32(crc), u32(data.length), u32(data.length), u16(name.length), u16(0));
+      parts.push(new Uint8Array(local), name, data);
+      central.push({ name: name, crc: crc, len: data.length, off: offset });
+      offset += local.length + name.length + data.length;
+    });
+    var cd = [], cdLen = 0;
+    central.forEach(function (c) {
+      var head = [].concat([0x50, 0x4B, 0x01, 0x02], u16(20), u16(20), u16(0x0800), u16(0), u16(0), u16(0),
+        u32(c.crc), u32(c.len), u32(c.len), u16(c.name.length), u16(0), u16(0), u16(0), u16(0),
+        u32(0), u32(c.off));
+      cd.push(new Uint8Array(head), c.name);
+      cdLen += head.length + c.name.length;
+    });
+    var end = new Uint8Array([].concat([0x50, 0x4B, 0x05, 0x06], u16(0), u16(0),
+      u16(central.length), u16(central.length), u32(cdLen), u32(offset), u16(0)));
+    return new Blob(parts.concat(cd, [end]), { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  }
+
+  function x(s) {
+    return String(s === null || s === undefined ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+  }
+  function col(n) {
+    var s = '';
+    while (n > 0) { var r = (n - 1) % 26; s = String.fromCharCode(65 + r) + s; n = (n - r - 1) / 26; }
+    return s;
+  }
+
+  /* style ids: 0 plain text · 1 bold text · 2 money · 3 bold money · 4 title · 5 header */
+  var STYLES =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    '<numFmts count="1"><numFmt numFmtId="164" formatCode="#,##0.00"/></numFmts>' +
+    '<fonts count="4">' +
+    '<font><sz val="11"/><name val="Calibri"/></font>' +
+    '<font><b/><sz val="11"/><name val="Calibri"/></font>' +
+    '<font><b/><sz val="14"/><color rgb="FF12474C"/><name val="Calibri"/></font>' +
+    '<font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>' +
+    '</fonts>' +
+    '<fills count="3"><fill><patternFill patternType="none"/></fill>' +
+    '<fill><patternFill patternType="gray125"/></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FF12474C"/><bgColor indexed="64"/></patternFill></fill></fills>' +
+    '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>' +
+    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+    '<cellXfs count="6">' +
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+    '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0"/>' +
+    '<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>' +
+    '<xf numFmtId="164" fontId="1" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>' +
+    '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0"/>' +
+    '<xf numFmtId="0" fontId="3" fillId="2" borderId="0" xfId="0" applyFill="1"/>' +
+    '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+
+  function cellXml(ref, cell) {
+    if (cell === null || cell === undefined || cell === '') return '';
+    var v = cell, bold = false, money = null, kind = '';
+    if (typeof cell === 'object') { v = cell.v; bold = !!cell.b; money = cell.m; kind = cell.t || ''; }
+    if (v === null || v === undefined || v === '') return '';
+    var isNum = typeof v === 'number' && isFinite(v);
+    var s;
+    if (kind === 'title') s = 4;
+    else if (kind === 'head') s = 5;
+    else if (isNum && money !== false) s = bold ? 3 : 2;
+    else s = bold ? 1 : 0;
+    if (isNum) return '<c r="' + ref + '" s="' + s + '"><v>' + v + '</v></c>';
+    return '<c r="' + ref + '" s="' + s + '" t="inlineStr"><is><t xml:space="preserve">' + x(v) + '</t></is></c>';
+  }
+
+  function sheetXml(sh) {
+    var cols = '';
+    if (sh.cols && sh.cols.length) {
+      cols = '<cols>' + sh.cols.map(function (wd, i) {
+        return '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + (wd || 14) + '" customWidth="1"/>';
+      }).join('') + '</cols>';
+    }
+    var rows = (sh.rows || []).map(function (r, i) {
+      var cells = (r || []).map(function (c, j) { return cellXml(col(j + 1) + (i + 1), c); }).join('');
+      return '<row r="' + (i + 1) + '">' + cells + '</row>';
+    }).join('');
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+      '<sheetViews><sheetView workbookViewId="0"' + (sh.freeze ? '><pane ySplit="' + sh.freeze +
+        '" topLeftCell="A' + (sh.freeze + 1) + '" activePane="bottomLeft" state="frozen"/></sheetView>'
+        : '/>') + '</sheetViews>' + cols + '<sheetData>' + rows + '</sheetData></worksheet>';
+  }
+
+  function build(sheets) {
+    var names = sheets.map(function (s, i) {
+      return String(s.name || ('Sheet' + (i + 1))).replace(/[\\\/\?\*\[\]:]/g, ' ').slice(0, 31);
+    });
+    var files = [
+      { name: '[Content_Types].xml',
+        data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+          '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+          '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+          '<Default Extension="xml" ContentType="application/xml"/>' +
+          '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+          sheets.map(function (s, i) {
+            return '<Override PartName="/xl/worksheets/sheet' + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>';
+          }).join('') +
+          '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>' },
+      { name: '_rels/.rels',
+        data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+          '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+          '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' },
+      { name: 'xl/workbook.xml',
+        data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+          '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" ' +
+          'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' +
+          names.map(function (n, i) {
+            return '<sheet name="' + x(n) + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>';
+          }).join('') + '</sheets></workbook>' },
+      { name: 'xl/_rels/workbook.xml.rels',
+        data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+          '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+          sheets.map(function (s, i) {
+            return '<Relationship Id="rId' + (i + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet' + (i + 1) + '.xml"/>';
+          }).join('') +
+          '<Relationship Id="rId' + (sheets.length + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' },
+      { name: 'xl/styles.xml', data: STYLES }
+    ];
+    sheets.forEach(function (s, i) {
+      files.push({ name: 'xl/worksheets/sheet' + (i + 1) + '.xml', data: sheetXml(s) });
+    });
+    return zip(files);
+  }
+
+  function save(filename, sheets) {
+    var blob = build(sheets);
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+  }
+
+  window.TaxiXlsx = { build: build, save: save };
+})();
+</script>
+
+<!-- 3 · demo book (ignored inside the Apps Script web app) -->
+<script>
+/* =====================================================================================
+ * DEMO BOOK — used only when the portal is opened OUTSIDE the Apps Script web app.
+ * Inside the web app, google.script.run exists and this file is never touched.
+ * The numbers are synthetic but internally consistent, so every reconciliation identity
+ * closes at 0.00 exactly as it must on the real book.
+ * ===================================================================================== */
+(function () {
+  'use strict';
+
+  var DRIVERS = [
+    ['DRV-101', 'Mahmoud Fathy', '01001234567'], ['DRV-102', 'Sayed Abd El Rahman', '01112223334'],
+    ['DRV-103', 'Karim Hosny', '01204455667'], ['DRV-104', 'Ashraf Mansour', '01098765432'],
+    ['DRV-105', 'Emad Shaaban', '01155667788'], ['DRV-106', 'Wael Nabil', '01277889900'],
+    ['DRV-107', 'Hany Zaki', '01033445566'], ['DRV-108', 'Tarek Selim', '01199887766'],
+    ['DRV-109', 'Osama Gaber', '01266554433'], ['DRV-110', 'Ramy Farouk', '01011223344']
+  ];
+  var DEBT_OF_GROSS = 0.178172, ENOV_OF_DEBT = 0.779151, FEE = 1.5, HALF = 0.75, ACH = 50, MINT = 50;
+  var WEEK = { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1 };
+
+  function iso(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function fromIso(s) { var a = String(s).split('-'); return new Date(+a[0], +a[1] - 1, +a[2]); }
+  function addD(s, n) { var d = fromIso(s); d.setDate(d.getDate() + n); return iso(d); }
+  function work(s) { return !!WEEK[fromIso(s).getDay()]; }
+  function nextWork(s) { var g = 0, x = s; while (!work(x) && g++ < 20) x = addD(x, 1); return x; }
+  function r2(n) { return Math.round(n * 100) / 100; }
+  var seed = 20260823;
+  function rnd() { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; }
+
+  var book = null, edits = { dep: {}, ref: {} };
+
+  function makeBook() {
+    seed = 20260823;
+    var today = iso(new Date()), N = 24, i, j;
+    var start = addD(today, -(N - 1));
+    var trips = [], links = [], byDriver = {}, linkNo = 4100;
+    DRIVERS.forEach(function (d) { byDriver[d[0]] = { id: d[0], name: d[1], phone: d[2], earned: 0, collected: 0, trips: 0, pool: 0 }; });
+
+    for (i = 0; i < N; i++) {
+      var day = addD(start, i), n = 5 + Math.floor(rnd() * 8);
+      for (j = 0; j < n; j++) {
+        var dv = DRIVERS[Math.floor(rnd() * DRIVERS.length)][0];
+        var gross = r2(55 + rnd() * 280);
+        var debt = r2(gross * DEBT_OF_GROSS);
+        trips.push({ id: 'T-' + (i * 100 + j), date: day, driver: dv, gross: gross, debt: debt });
+        var b = byDriver[dv];
+        b.earned = r2(b.earned + debt); b.pool = r2(b.pool + debt); b.trips++;
+      }
+      /* a couple of drivers top up each day once they owe enough */
+      var payers = DRIVERS.filter(function (d) { return byDriver[d[0]].pool > 60; });
+      var take = Math.min(payers.length, 1 + Math.floor(rnd() * 3));
+      for (j = 0; j < take; j++) {
+        var p = payers[Math.floor(rnd() * payers.length)][0], bb = byDriver[p];
+        if (bb.pool < 60) continue;
+        var base = r2(Math.min(bb.pool, 60 + rnd() * 180));
+        bb.pool = r2(bb.pool - base); bb.collected = r2(bb.collected + base);
+        var enov = r2(base * ENOV_OF_DEBT);
+        links.push({ id: 'PM-' + (linkNo++), driver: p, name: bb.name, base: base,
+          link: r2(base + FEE), paid: day, ref: 'PMB' + (900000 + Math.floor(rnd() * 99999)),
+          deposit: nextWork(addD(day, 1)), enovBase: enov, zedsBase: r2(base - enov) });
+      }
+    }
+
+    /* the last two deposit days are not confirmed yet, and one day carries a variance */
+    var dayset = {}, dayList;
+    links.forEach(function (l) { dayset[l.deposit] = 1; });
+    for (i = 0; i < N; i++) { var dd = addD(start, i); if (work(dd)) dayset[dd] = 1; }
+    dayList = Object.keys(dayset).sort().filter(function (x) { return x <= today; });
+
+    var agg = {};
+    dayList.forEach(function (d) { agg[d] = { links: 0, base: 0, expected: 0, enov: 0, zeds: 0, fee: 0 }; });
+    links.forEach(function (l) {
+      var a = agg[l.deposit];
+      if (!a) return;
+      a.links++; a.base = r2(a.base + l.base); a.expected = r2(a.expected + l.link);
+      a.enov = r2(a.enov + l.enovBase); a.zeds = r2(a.zeds + l.zedsBase);
+      a.fee = r2(a.fee + HALF);
+    });
+
+    var unconfirmed = dayList.filter(function (d) { return agg[d].links > 0; }).slice(-2);
+    var varianceDay = dayList.filter(function (d) { return agg[d].links > 0; }).slice(-5)[0] || '';
+
+    var days = [], cumEnt = 0, cumSent = 0;
+    dayList.forEach(function (d) {
+      var a = agg[d];
+      var confirmed, deposit;
+      if (edits.dep[d] !== undefined) { confirmed = true; deposit = edits.dep[d]; }
+      else if (unconfirmed.indexOf(d) >= 0) { confirmed = false; deposit = 0; }
+      else { confirmed = true; deposit = d === varianceDay ? r2(a.expected - 37) : a.expected; }
+      var variance = confirmed ? r2(deposit - a.expected) : 0;
+      var ent = r2(a.enov + a.fee);
+      var wireable = a.links === 0 ? true : (confirmed && variance === 0);
+      var isWork = work(d), ach = 0, net = 0, pending = 0;
+      if (wireable) cumEnt = r2(cumEnt + ent); else pending = ent;
+      if (wireable && isWork) {
+        var due = r2(cumEnt - cumSent), cand = r2(due - ACH);
+        if (cand >= MINT && cand > 0) { ach = ACH; net = cand; cumSent = cumEnt; }
+      }
+      days.push({ date: d, links: a.links, deposit: deposit, expected: a.expected,
+        variance: variance, confirmed: confirmed, matched: a.base, zeds: a.zeds, zedsFee: a.fee,
+        kept: r2(a.zeds + a.fee), enov: a.enov, fees: a.fee, ach: ach, net: net,
+        credit: 0, carry: r2(cumEnt - cumSent), pending: pending,
+        state: net > 0 ? 'Transferred' : (!confirmed && a.links > 0 ? 'NOT TRANSFERABLE - type the bank deposit'
+          : (confirmed && variance !== 0 ? 'VARIANCE ' + variance.toFixed(2) + ' - DO NOT TRANSFER'
+            : (!isWork ? 'Non-working day - carried to the next working day'
+              : (ent === 0 && a.base === 0 ? 'Nothing due' : 'Below the minimum - carried')))),
+        ref: edits.ref[d] || (net > 0 ? 'ACH-' + d.replace(/-/g, '') + '-01' : ''),
+        loggedAt: (edits.ref[d] || net > 0) ? d + ' 10:14' : '' });
+    });
+
+    var tripTot = { gross: 0, debt: 0 };
+    trips.forEach(function (t) { tripTot.gross = r2(tripTot.gross + t.gross); tripTot.debt = r2(tripTot.debt + t.debt); });
+    var landed = links.filter(function (l) { return l.deposit <= today; });
+    var matched = 0, enovRel = 0, zedsRel = 0;
+    landed.forEach(function (l) { matched = r2(matched + l.base); enovRel = r2(enovRel + l.enovBase); zedsRel = r2(zedsRel + l.zedsBase); });
+    book = { today: today, trips: trips, links: links, days: days, agg: agg,
+      drivers: DRIVERS.map(function (d) {
+        var b = byDriver[d[0]], out = r2(b.earned - b.collected);
+        return { id: b.id, name: b.name, phone: b.phone, trips: b.trips, earned: b.earned,
+          collected: b.collected, outstanding: out, credit: 0, held: 0,
+          status: out >= 200 ? 'Blocked' : (out > 0 ? 'Owing' : 'Clear') };
+      }).sort(function (a, b) { return b.outstanding - a.outstanding; }),
+      tot: tripTot, matched: matched, enovRel: enovRel, zedsRel: zedsRel, landed: landed };
+    return book;
+  }
+
+  function shape(o) {
+    o = o || {};
+    if (!book) makeBook();
+    var b = book, start = o.start || '', end = o.end || '';
+    var inR = function (d) { return (!start || d >= start) && (!end || d <= end); };
+    var days = b.days.filter(function (r) { return inR(r.date); });
+    var payments = b.landed.concat(b.links.filter(function (l) { return l.deposit > b.today; }))
+      .filter(function (l) { return inR(l.deposit) || inR(l.paid); })
+      .filter(function (l) { return o.driverId && o.driverId !== 'all' ? l.driver === o.driverId : true; })
+      .map(function (l) {
+        return { id: l.id, driver: l.driver, name: l.name, base: l.base, link: l.link,
+          paid: l.paid, deposit: l.deposit, ref: l.ref, zeds: r2(l.zedsBase + 0.75),
+          enov: r2(l.enovBase + 0.75), credit: 0, landed: l.deposit <= b.today };
+      }).sort(function (x, y) { return x.deposit < y.deposit ? 1 : -1; });
+    var trips = b.trips.filter(function (t) { return inR(t.date); });
+
+    var sum = function (f) { var s = 0; days.forEach(function (r) { s = r2(s + (Number(f(r)) || 0)); }); return s; };
+    var gross = 0, debt = 0;
+    trips.forEach(function (t) { gross = r2(gross + t.gross); debt = r2(debt + t.debt); });
+    var matched = sum(function (r) { return r.matched; });
+    var enovRel = sum(function (r) { return r.enov; });
+    var zedsRel = sum(function (r) { return r.zeds; });
+    var enovFees = sum(function (r) { return r.fees; });
+    var zedsFees = sum(function (r) { return r.zedsFee; });
+    var transferred = sum(function (r) { return r.net; });
+    var ach = sum(function (r) { return r.ach; });
+    var pending = sum(function (r) { return r.pending; });
+    var carried = days.length ? days[days.length - 1].carry : 0;
+    var deposit = sum(function (r) { return r.confirmed ? r.deposit : 0; });
+    var expected = sum(function (r) { return r.expected; });
+    var enovEnt = r2(enovRel + enovFees);
+
+    var focusDay = o.focus || (days.length ? days[days.length - 1].date : b.today);
+    var fr = null;
+    b.days.forEach(function (r) { if (r.date === focusDay) fr = r; });
+    var ftrips = b.trips.filter(function (t) { return t.date === focusDay; });
+    var fg = 0, fd = 0;
+    ftrips.forEach(function (t) { fg = r2(fg + t.gross); fd = r2(fd + t.debt); });
+    var focus = {
+      date: focusDay, isToday: focusDay === b.today, hasRow: !!fr,
+      confirmed: fr ? fr.confirmed : false, deposit: fr ? fr.deposit : 0,
+      expected: fr ? fr.expected : 0, variance: fr ? fr.variance : 0,
+      matched: fr ? fr.matched : 0, credit: 0, kept: fr ? fr.kept : 0,
+      enov: fr ? fr.enov : 0, fees: fr ? fr.fees : 0, ach: fr ? fr.ach : 0,
+      net: fr ? fr.net : 0, pending: fr ? fr.pending : 0, carry: fr ? fr.carry : 0,
+      trips: ftrips.length, gross: fg, debt: fd,
+      canSend: !!(fr && fr.net > 0), ref: fr ? fr.ref : '', loggedAt: fr ? fr.loggedAt : ''
+    };
+
+    var checks = [
+      ['Debt = our share + eNovate share (every trip)', debt, debt],
+      ['Debt = commission + fixed fee + VAT (every trip)', debt, debt],
+      ['Rider total = meter fare + debt (every trip)', gross, gross],
+      ['eNovate share = eNovate + SSG + Traffic (reference split)', r2(debt * 0.779), r2(debt * 0.779)],
+      ['Debt in the driver timelines = debt on the trips minus disputes', debt, debt],
+      ['Cash landed = matched to debt + driver credit', matched, matched],
+      ['Daily rows = the allocation they came from', matched, matched],
+      ['Link amounts = our side + eNovate side + driver credit', expected, expected],
+      ['Transfers + ACH + carried + pending = eNovate earned from landed cash',
+        r2(transferred + ach + carried + pending), r2(enovRel + enovFees)]
+    ].map(function (c) {
+      return { label: c[0], left: c[1], right: c[2], diff: r2(c[1] - c[2]), pass: Math.abs(r2(c[1] - c[2])) < 0.005 };
+    });
+
+    return {
+      version: 'v14.2 (demo book)', sig: JSON.stringify([start, end, o.driverId, o.focus, edits]).length +
+        ':' + days.length + ':' + payments.length + ':' + transferred + ':' + focusDay,
+      range: { start: start, end: end },
+      filters: { minDate: b.days.length ? b.days[0].date : b.today,
+        drivers: b.drivers.map(function (d) { return { id: d.id, name: d.name }; }) },
+      settings: { linkFee: FEE, zedsLinkFee: HALF, enovLinkFee: HALF, ach: ACH, minTransfer: MINT,
+        lag: 1, block: 200, gate: true, gateVariance: true, remit: true, holdDisputed: true,
+        workWeek: 'Sun Mon Tue Wed Thu', holidays: [] },
+      kpi: {
+        trips: trips.length, gross: gross, meter: r2(gross - debt), comm: r2(debt * 0.6919),
+        fixed: r2(trips.length * 5), vat: r2(debt * 0.0775), debt: debt,
+        zedsEarned: r2(debt * 0.220849), enovEarned: r2(debt * 0.779151),
+        enovOwn: r2(debt * 0.41), ssg: r2(debt * 0.2767), traffic: r2(debt * 0.0922),
+        zedsVat: r2(debt * 0.0271), charged: expected, collected: matched, deposit: deposit,
+        transit: r2(b.links.filter(function (l) { return l.deposit > b.today; })
+          .reduce(function (s, l) { return s + l.base; }, 0)),
+        matched: matched, credit: 0, held: 0,
+        outstanding: r2(debt - matched), collectionPct: debt ? r2(matched / debt * 100) : 0,
+        zedsRel: zedsRel, zedsFees: zedsFees, zedsCash: r2(zedsRel + zedsFees),
+        enovRel: enovRel, enovFees: enovFees, enovEnt: enovEnt, transferred: transferred,
+        ach: ach, transfers: days.filter(function (r) { return r.net > 0; }).length,
+        carried: carried, pending: pending, notCollected: r2(debt - matched),
+        variance: sum(function (r) { return r.variance; }),
+        varianceBlocked: days.filter(function (r) { return r.confirmed && r.variance !== 0; }).length,
+        unconfirmed: days.filter(function (r) { return !r.confirmed && r.links > 0; }).length,
+        blocked: b.drivers.filter(function (d) { return d.status === 'Blocked'; }).length,
+        disputes: 0, badDate: 0, noRate: 0, badTrip: 0, dupLinks: 0, lowFare: 2, sysGap: 0,
+        badPhone: 0, orphanPay: 0
+      },
+      model: { effectiveFrom: '2026-01-01', commRate: 0.15, fixedFee: 5, eShareComm: 0.7,
+        ssgShareComm: 0.3, zedsShare: 0.35, eShareFixed: 0.3, ssgShareFixed: 0.3,
+        trafficShareFixed: 0.4, vatRate: 0.14,
+        ex: { gross: 121.68, meter: 100, comm: 15, fixed: 5, vat: 1.68, debt: 21.68,
+          zeds: 4.79, enov: 16.89, enovOwn: 8.89, ssg: 6, traffic: 2 } },
+      focus: focus, days: days, drivers: b.drivers, payments: payments,
+      trips: trips.map(function (t) {
+        return { id: t.id, date: t.date, driver: t.driver, name: '', gross: t.gross,
+          meter: r2(t.gross - t.debt), comm: r2(t.debt * 0.69), fixed: 5, vat: r2(t.debt * 0.0775),
+          debt: t.debt, zeds: r2(t.debt * 0.2208), enov: r2(t.debt * 0.7792),
+          ssg: r2(t.debt * 0.2767), traffic: r2(t.debt * 0.0922), collected: 0, status: 'Settled' };
+      }),
+      series: days.map(function (r) { return { date: r.date, gross: r.expected, matched: r.matched, net: r.net }; }),
+      checks: checks, rateWarn: '', driverScoped: !!(o.driverId && o.driverId !== 'all')
+    };
+  }
+
+  window.TAXI_DEMO = {
+    run: function (fn, args) {
+      if (fn === 'getDashboardData') return shape(args[0]);
+      if (fn === 'apiRecalc') { var p = shape(args[0]); p.action = { ok: true, message: 'Recalculated.' }; return p; }
+      if (fn === 'apiSetDeposit') {
+        edits.dep[args[0]] = Math.round((Number(args[1]) || 0) * 100) / 100;
+        book = null; makeBook();
+        var p2 = shape(args[2]);
+        p2.action = { ok: true, message: 'Bank deposit saved for ' + args[0] + '.' };
+        return p2;
+      }
+      if (fn === 'apiLogTransfer') {
+        edits.ref[args[0]] = String(args[1] || '');
+        book = null; makeBook();
+        var p3 = shape(args[2]);
+        p3.action = { ok: true, message: 'Transfer logged for ' + args[0] + '.' };
+        return p3;
+      }
+      throw new Error('unknown call ' + fn);
+    }
+  };
+})();
+</script>
+
+<!-- 4 · the portal -->
+<script>
+/* =====================================================================================
+ * TAXI SHARM — SETTLEMENT PORTAL  ·  v15 front end
+ *
+ * One custom element, <taxi-portal>, that renders the whole portal. It talks to the Apps
+ * Script engine through google.script.run when it is running inside the web app, and falls
+ * back to a self-contained demo book when it is not, so the same file can be reviewed
+ * outside Apps Script.
+ *
+ * SEVEN PAGES, each with its own header and its own export:
+ *   Today        the transfer that is due, and the bank deposit for that day
+ *   Pool         money collected from drivers that has NOT gone to eNovate yet  <- the core
+ *   History      one row per settlement day, with the transfer log
+ *   Drivers      balances, credit, blocking
+ *   Links        every top-up link and whether the cash landed
+ *   eNovate      the remittance sheet: who paid, how much landed, what is eNovate's
+ *   Reconcile    identities, data quality, rate card, settings
+ *
+ * WORKING WEEK. Transfers only go out Sun-Thu. Friday and Saturday cash is collected but
+ * carried, and leaves with Sunday's single transfer paying one ACH fee. Every screen that
+ * shows a carried amount says which working day it will leave on.
+ * ===================================================================================== */
+(function () {
+  'use strict';
+
+  var CSS = [
+    '@keyframes tp-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}',
+    '@keyframes tp-pulse{0%,100%{opacity:1}50%{opacity:.35}}',
+    '.tp{--teal-deep:#12474C;--teal:#1F6E74;--teal-mid:#2A7379;--teal-bright:#35939A;',
+    '--teal-pale:#E9F1F1;--navy:#182643;--red:#C40202;--orange:#EB9F0B;--sand:#F2C230;',
+    '--sand-deep:#D9A614;--ok:#1B7A4A;--warn:#9A6108;--bad:#C40202;--ink:#111D1C;',
+    '--muted:#6E7A79;--soft:#48524F;--line:#E1E6E4;--canvas:#F3F6F4;--card:#FFFFFF;',
+    '--r:12px;--r-lg:18px;--shadow:0 1px 2px rgba(17,29,28,.05),0 8px 24px rgba(17,29,28,.06);',
+    '--pop:0 20px 50px rgba(17,29,28,.18);box-sizing:border-box;display:block;min-height:100vh;',
+    'background:var(--canvas);color:var(--ink);font:400 14px/1.45 Outfit,system-ui,-apple-system,sans-serif;',
+    '-webkit-font-smoothing:antialiased}',
+    '.tp *{box-sizing:border-box}',
+    '.tp .num{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;letter-spacing:-.02em}',
+    '.tp button{font-family:inherit}',
+    '.tp ::selection{background:var(--sand);color:#2A1C00}',
+    '.tp :focus-visible{outline:2px solid var(--teal-bright);outline-offset:2px;border-radius:6px}',
+    '.tp svg.ic{width:16px;height:16px;flex-shrink:0}',
+    '.tp .shell{display:flex;min-height:100vh}',
+
+    /* rail */
+    '.tp .rail{width:236px;flex-shrink:0;background:linear-gradient(172deg,#17575C,#0C3438 72%);',
+    'display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:20;',
+    'transition:width .18s ease}',
+    '.tp.tight .rail{width:74px}',
+    '.tp .brand{padding:16px 15px 13px;display:flex;align-items:center;gap:12px}',
+    '.tp .plate{width:52px;height:52px;border-radius:14px;background:#FFF;flex-shrink:0;overflow:hidden;',
+    'box-shadow:0 4px 14px rgba(0,0,0,.28);display:block;cursor:pointer}',
+    '.tp .plate img{width:100%;height:100%;object-fit:cover;display:block}',
+    '.tp .wordmark b{display:block;color:#FFF;font-size:16px;font-weight:600;letter-spacing:-.02em;white-space:nowrap}',
+    '.tp .wordmark span{display:block;color:#8CC0C2;font-size:9px;font-weight:700;letter-spacing:.18em;',
+    'text-transform:uppercase;margin-top:3px;white-space:nowrap}',
+    '.tp.tight .wordmark{display:none}',
+    '.tp.tight .brand{padding:14px 0 12px;justify-content:center}',
+    '.tp .railBtn{position:absolute;top:32px;left:222px;width:24px;height:24px;border-radius:50%;',
+    'background:#FFF;border:1px solid var(--line);color:var(--teal-deep);cursor:pointer;display:flex;',
+    'align-items:center;justify-content:center;padding:0;z-index:22;box-shadow:0 2px 8px rgba(17,29,28,.18);transition:left .18s}',
+    '.tp.tight .railBtn{left:60px}',
+    '.tp .railBtn svg{width:13px;height:13px;transition:transform .18s}',
+    '.tp.tight .railBtn svg{transform:rotate(180deg)}',
+    '.tp .railBtn:hover{background:var(--teal-deep);color:#FFF;border-color:var(--teal-deep)}',
+    '.tp nav{padding:6px 0;display:flex;flex-direction:column;gap:1px}',
+    '.tp nav a{display:flex;align-items:center;gap:11px;padding:10px 16px;color:#C6DEDE;font-size:13.5px;',
+    'font-weight:500;cursor:pointer;border-left:3px solid transparent;white-space:nowrap;text-decoration:none}',
+    '.tp nav a:hover{background:rgba(255,255,255,.07);color:#FFF}',
+    '.tp nav a.on{background:rgba(255,255,255,.13);color:#FFF;border-left-color:var(--sand);font-weight:600}',
+    '.tp nav a.on svg.ic{color:var(--sand)}',
+    '.tp nav a .kb{margin-left:auto;font-size:9.5px;font-weight:700;color:#5E8E90;font-family:"IBM Plex Mono",monospace}',
+    '.tp nav a .cnt{margin-left:auto;font-size:10px;font-weight:700;background:var(--red);color:#FFF;',
+    'border-radius:20px;padding:1px 7px}',
+    '.tp.tight nav a{padding:12px 0;justify-content:center;border-left:none;border-right:3px solid transparent}',
+    '.tp.tight nav a.on{border-right-color:var(--sand)}',
+    '.tp.tight nav a .tx,.tp.tight nav a .kb,.tp.tight nav a .cnt{display:none}',
+    '.tp .railFoot{margin-top:auto;padding:14px 16px 16px;border-top:1px solid rgba(255,255,255,.14);cursor:pointer}',
+    '.tp .railFoot:hover{background:rgba(255,255,255,.05)}',
+    '.tp .railFoot .l{font-size:8.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--sand)}',
+    '.tp .railFoot .v{font-size:25px;font-weight:600;color:#FFF;margin-top:3px;letter-spacing:-.03em}',
+    '.tp .railFoot .n{font-size:10.5px;color:#8FBCBE;margin-top:3px;line-height:1.4}',
+    '.tp.tight .railFoot{display:none}',
+    '.tp .weave{height:8px;display:flex;flex-shrink:0}',
+    '.tp .weave i{flex:1}',
+
+    /* header */
+    '.tp main{flex:1;min-width:0;display:flex;flex-direction:column}',
+    '.tp header{background:var(--card);border-bottom:1px solid var(--line);padding:14px 24px 13px;',
+    'display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:15}',
+    '.tp header .ht{min-width:0}',
+    '.tp header .eyebrow{font-size:8.5px;font-weight:700;letter-spacing:.17em;text-transform:uppercase;',
+    'color:var(--teal-bright)}',
+    '.tp header h1{margin:3px 0 0;font-size:23px;font-weight:600;letter-spacing:-.03em;line-height:1.05}',
+    '.tp header p.sub{margin:5px 0 0;font-size:12.5px;color:var(--muted);max-width:70ch}',
+    '.tp header .hr{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}',
+
+    /* controls */
+    '.tp .btn{border:1px solid transparent;border-radius:9px;height:37px;padding:0 14px;font-size:12.5px;',
+    'font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:7px;line-height:1;transition:.13s}',
+    '.tp .btn:active{transform:translateY(1px)}',
+    '.tp .btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}',
+    '.tp .btn-primary{background:var(--teal-deep);color:#FFF}',
+    '.tp .btn-primary:hover:not([disabled]){background:#0A3034}',
+    '.tp .btn-accent{background:var(--sand);color:#3A2600}',
+    '.tp .btn-accent:hover:not([disabled]){background:var(--sand-deep)}',
+    '.tp .btn-ghost{background:#FFF;color:var(--soft);border-color:var(--line)}',
+    '.tp .btn-ghost:hover:not([disabled]){border-color:var(--teal-bright);color:var(--teal-deep)}',
+    '.tp .pill{font-size:11.5px;font-weight:600;padding:0 13px;height:37px;border-radius:20px;',
+    'background:var(--teal-pale);color:var(--teal-deep);display:inline-flex;align-items:center;gap:7px;white-space:nowrap}',
+    '.tp .rangebox{position:relative}',
+    '.tp .rangebtn{display:inline-flex;align-items:center;gap:9px;height:37px;padding:0 12px;border:1px solid var(--line);',
+    'background:#FFF;border-radius:9px;cursor:pointer;color:var(--ink)}',
+    '.tp .rangebtn:hover{border-color:var(--teal-bright)}',
+    '.tp .rangebtn.act{border-color:var(--teal-deep);box-shadow:0 0 0 3px rgba(18,71,76,.1)}',
+    '.tp .rangebtn .rl b{display:block;font-size:12.5px;font-weight:600;text-align:left;font-family:"IBM Plex Mono",monospace}',
+    '.tp .rangebtn .rl i{display:block;font-style:normal;font-size:8.5px;font-weight:700;letter-spacing:.13em;',
+    'text-transform:uppercase;color:var(--muted);margin-top:2px;text-align:left}',
+    '.tp .pop{position:absolute;top:calc(100% + 8px);right:0;width:286px;background:#FFF;border:1px solid var(--line);',
+    'border-radius:var(--r);box-shadow:var(--pop);padding:8px;z-index:40;animation:tp-in .14s ease}',
+    '.tp .pop .opt{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 11px;',
+    'border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:500}',
+    '.tp .pop .opt:hover{background:var(--teal-pale)}',
+    '.tp .pop .opt.on{background:var(--teal-deep);color:#FFF;font-weight:600}',
+    '.tp .pop .opt span{font-size:10.5px;opacity:.72;font-family:"IBM Plex Mono",monospace}',
+    '.tp .pop .cust{border-top:1px solid var(--line);margin-top:6px;padding:9px 3px 2px;display:flex;align-items:center;gap:7px}',
+    '.tp .pop .cust input{flex:1;border:1px solid var(--line);border-radius:7px;padding:7px 8px;font-size:12.5px;',
+    'font-family:"IBM Plex Mono",monospace;min-width:0}',
+    '.tp .chip{border:1px solid var(--line);background:#FFF;color:var(--muted);border-radius:20px;padding:7px 13px;',
+    'font-size:11.5px;font-weight:600;cursor:pointer}',
+    '.tp .chip:hover{border-color:var(--teal-bright);color:var(--teal-deep)}',
+    '.tp .chip.on{background:var(--teal-deep);border-color:var(--teal-deep);color:#FFF}',
+    '.tp .search{position:relative;flex:1 1 220px;max-width:320px}',
+    '.tp .search input{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px 9px 33px;',
+    'font-size:13px;font-family:inherit;color:var(--ink);background:#FFF}',
+    '.tp .search input:focus{outline:none;border-color:var(--teal-bright);box-shadow:0 0 0 3px rgba(53,147,154,.13)}',
+    '.tp .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}',
+
+    /* body + panels */
+    '.tp .body{padding:18px 24px 56px;display:flex;flex-direction:column;gap:14px}',
+    '.tp .page{display:none;flex-direction:column;gap:14px}',
+    '.tp .page.on{display:flex;animation:tp-in .18s ease}',
+    '.tp .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:17px 19px;box-shadow:var(--shadow)}',
+    '.tp .panel>h2{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin:0 0 13px;',
+    'display:flex;align-items:center;gap:9px}',
+    '.tp .panel>h2 em{font-style:normal;margin-left:auto;font-size:10.5px;letter-spacing:0;text-transform:none;color:var(--muted);font-weight:500}',
+    '.tp .g2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px}',
+    '.tp .g2b{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}',
+    '@media (max-width:1120px){.tp .g2,.tp .g2b{grid-template-columns:1fr}}',
+    '.tp .strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));background:var(--card);',
+    'border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}',
+    '.tp .strip>div{padding:13px 16px;border-right:1px solid var(--line)}',
+    '.tp .strip>div:last-child{border-right:none}',
+    '.tp .strip .l{font-size:8.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}',
+    '.tp .strip .v{font-size:20px;font-weight:500;margin-top:5px;letter-spacing:-.025em}',
+    '.tp .strip .n{font-size:10.5px;color:var(--muted);margin-top:2px}',
+
+    /* the transfer ticket */
+    '.tp .ticket{background:linear-gradient(150deg,#17575C,#0D3A3E);border-radius:var(--r-lg);color:#FFF;',
+    'overflow:hidden;display:grid;grid-template-columns:minmax(300px,1fr) minmax(320px,.95fr);box-shadow:var(--shadow)}',
+    '.tp .ticket .stub{padding:24px 26px 26px;position:relative}',
+    '.tp .ticket .side{padding:24px 26px 26px 32px;background:rgba(255,255,255,.05);border-left:1px dashed rgba(255,255,255,.22)}',
+    '.tp .eb{font-size:9px;font-weight:700;letter-spacing:.19em;text-transform:uppercase;color:var(--sand)}',
+    '.tp .amt{font-size:52px;font-weight:600;color:var(--sand);line-height:1;margin:10px 0 0;letter-spacing:-.04em}',
+    '.tp .amt sup{font-size:14px;font-weight:600;margin-left:8px;letter-spacing:.07em;vertical-align:.95em;color:#CFAE4C}',
+    '.tp .st{display:flex;align-items:flex-start;gap:10px;margin-top:15px;font-size:13px;font-weight:600;',
+    'padding:10px 13px;border-radius:10px;line-height:1.5}',
+    '.tp .st.go{background:#10402B;color:#A7E5C4}',
+    '.tp .st.hold{background:#6E2E0A;color:#FFD9A8}',
+    '.tp .st.stop{background:#5B1010;color:#FFC9C6}',
+    '.tp .acts{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}',
+    '.tp .ticket .btn-ghost{background:rgba(255,255,255,.11);color:#FFF;border-color:rgba(255,255,255,.28)}',
+    '.tp .ticket .btn-ghost:hover:not([disabled]){background:rgba(255,255,255,.2);color:#FFF}',
+    '.tp .meter .ln{display:flex;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px dashed rgba(255,255,255,.16);font-size:12.5px}',
+    '.tp .meter .ln:last-child{border-bottom:none}',
+    '.tp .meter .ln .k{color:#A9CFD0;flex:1}',
+    '.tp .meter .ln .v{color:#FFF;font-weight:500}',
+    '.tp .meter .ln.gap{border-bottom-style:solid;border-bottom-color:rgba(255,255,255,.3)}',
+    '.tp .meter .ln.key{padding-top:11px}',
+    '.tp .meter .ln.key .k{color:#FFF;font-weight:600}',
+    '.tp .meter .ln.key .v{color:var(--sand);font-weight:600;font-size:16px}',
+
+    /* pool */
+    '.tp .poolcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow);',
+    'padding:20px 22px;display:grid;grid-template-columns:minmax(240px,.9fr) minmax(0,1.5fr);gap:22px;align-items:center}',
+    '@media (max-width:900px){.tp .poolcard{grid-template-columns:1fr}}',
+    '.tp .poolcard .big{font-size:46px;font-weight:600;letter-spacing:-.04em;line-height:1;color:var(--teal-deep);margin-top:8px}',
+    '.tp .poolcard .big sup{font-size:13px;color:var(--muted);margin-left:7px;vertical-align:.9em;letter-spacing:.06em}',
+    '.tp .bar{height:26px;border-radius:7px;overflow:hidden;display:flex;background:var(--canvas)}',
+    '.tp .bar i{display:block;height:100%}',
+    '.tp .keys{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px}',
+    '.tp .keys div{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--soft)}',
+    '.tp .keys i{width:10px;height:10px;border-radius:3px;display:block}',
+    '.tp .keys b{font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--ink)}',
+    '.tp .nextbox{border:1px dashed var(--teal-bright);background:#F2F8F8;border-radius:var(--r);padding:15px 17px}',
+    '.tp .nextbox .row{display:flex;align-items:baseline;gap:10px;font-size:12.5px;padding:5px 0}',
+    '.tp .nextbox .row .k{color:var(--soft);flex:1}',
+    '.tp .nextbox .row.tot{border-top:1px solid var(--line);margin-top:6px;padding-top:9px;font-weight:600}',
+    '.tp .nextbox .row.tot .v{font-size:21px;color:var(--teal-deep);font-weight:600}',
+    '.tp .wk{display:flex;gap:6px;margin-top:4px}',
+    '.tp .wk div{flex:1;text-align:center;border-radius:8px;padding:8px 2px;border:1px solid var(--line);background:#FFF}',
+    '.tp .wk div .d{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}',
+    '.tp .wk div .m{font-size:11.5px;font-weight:600;margin-top:4px;font-family:"IBM Plex Mono",monospace}',
+    '.tp .wk div.off{background:#FAFAF8;color:var(--muted)}',
+    '.tp .wk div.off .d{color:#A8B2B0}',
+    '.tp .wk div.pay{border-color:var(--teal-deep);background:#EAF3F3}',
+    '.tp .wk div.pay .d{color:var(--teal-deep)}',
+    '.tp .wk div.today{box-shadow:0 0 0 2px var(--sand)}',
+
+    /* tables */
+    '.tp table.data{width:100%;border-collapse:collapse;font-size:12.5px}',
+    '.tp table.data th{text-align:left;font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;',
+    'color:var(--muted);padding:0 9px 9px 0;border-bottom:1px solid var(--line);white-space:nowrap}',
+    '.tp table.data td{padding:9px 9px 9px 0;border-bottom:1px solid #F1F3F2;vertical-align:middle}',
+    '.tp table.data tbody tr:hover td{background:#FAFCFB}',
+    '.tp table.data tr:last-child td{border-bottom:none}',
+    '.tp table.data .right{text-align:right;padding-right:0;padding-left:9px}',
+    '.tp table.data th.right{text-align:right}',
+    '.tp table.data tr.tot td{font-weight:600;border-top:2px solid var(--line);background:#F9FBFA}',
+    '.tp table.data tr.sep td{background:#F6F9F8;font-weight:600;color:var(--teal-deep);font-size:11.5px}',
+    '.tp table.data tr.dim td{color:var(--muted)}',
+    '.tp table.data th.s{cursor:pointer;user-select:none}',
+    '.tp table.data th.s:hover{color:var(--teal)}',
+    '.tp table.data th.s:after{content:"\\2195";opacity:.3;margin-left:4px;font-size:9px}',
+    '.tp table.data th.s.asc:after{content:"\\2191";opacity:1;color:var(--teal)}',
+    '.tp table.data th.s.desc:after{content:"\\2193";opacity:1;color:var(--teal)}',
+    '.tp .scroll{overflow-x:auto}',
+    '.tp .list{max-height:600px;overflow:auto}',
+    '.tp .list table.data thead th{position:sticky;top:0;background:#FFF;z-index:2;box-shadow:inset 0 -1px 0 var(--line)}',
+    '.tp a.lk{cursor:pointer;color:inherit;border-bottom:1px dotted #B9C4C3}',
+    '.tp a.lk:hover{color:var(--teal-deep);border-bottom-color:var(--teal)}',
+    '.tp .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px}',
+    '.tp .bdg{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:600;white-space:nowrap}',
+    '.tp .bdg.good{background:#E6F3EC;color:var(--ok)}',
+    '.tp .bdg.wait{background:#FDF3DF;color:var(--warn)}',
+    '.tp .bdg.bad{background:#FBE6E5;color:var(--bad)}',
+    '.tp .bdg.mute{background:#EEF0EF;color:var(--muted)}',
+    '.tp .tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 13px}',
+    '.tp .hits{font-size:11px;color:var(--muted);margin-left:auto;white-space:nowrap}',
+
+    /* misc blocks */
+    '.tp .frm{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}',
+    '.tp .fld{display:flex;flex-direction:column;gap:6px}',
+    '.tp .fld label{font-size:8.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}',
+    '.tp .fld input{border:1px solid var(--line);border-radius:9px;height:37px;padding:0 12px;font-size:13.5px;',
+    'font-family:"IBM Plex Mono",monospace;color:var(--ink);width:190px;background:#FFF}',
+    '.tp .fld input:focus{outline:none;border-color:var(--teal-bright);box-shadow:0 0 0 3px rgba(53,147,154,.13)}',
+    '.tp .alert{border-radius:var(--r);padding:12px 17px;font-size:12.5px;font-weight:500;background:#FBE6E5;',
+    'color:var(--bad);border:1px solid #F2CFCD;line-height:1.55}',
+    '.tp .note{font-size:11.5px;color:var(--muted);line-height:1.55;margin:10px 0 0;display:flex;gap:8px}',
+    '.tp .note svg{color:var(--teal-bright);margin-top:1px}',
+    '.tp .loading{text-align:center;padding:54px;color:var(--muted);font-size:13.5px}',
+    '.tp .loading.err{color:var(--bad)}',
+    '.tp .wf{display:flex;align-items:center;gap:12px;margin-bottom:8px}',
+    '.tp .wf .lb{width:216px;font-size:12.5px;color:var(--soft);flex-shrink:0}',
+    '.tp .wf.key .lb,.tp .wf.key .vl{color:var(--ink);font-weight:600}',
+    '.tp .wf .tk{flex:1;height:17px;background:var(--canvas);border-radius:5px;overflow:hidden}',
+    '.tp .wf .tk>div{height:100%;border-radius:5px}',
+    '.tp .wf .vl{width:104px;text-align:right;font-size:12.5px;color:var(--soft);flex-shrink:0;',
+    'font-family:"IBM Plex Mono",monospace}',
+    '.tp details.acc{border:1px solid var(--line);border-radius:var(--r);background:var(--card);box-shadow:var(--shadow)}',
+    '.tp details.acc+details.acc{margin-top:9px}',
+    '.tp details.acc>summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;align-items:center;gap:12px;',
+    'font-size:13.5px;font-weight:600}',
+    '.tp details.acc>summary::-webkit-details-marker{display:none}',
+    '.tp details.acc[open]>summary{border-bottom:1px solid var(--line)}',
+    '.tp details.acc>summary .caret{margin-left:auto;color:var(--muted);display:flex}',
+    '.tp details.acc[open]>summary .caret svg{transform:rotate(180deg)}',
+    '.tp details.acc .in{padding:16px 18px 19px}',
+    '.tp .tag{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap}',
+    '.tp .tag.ok{background:#E6F3EC;color:var(--ok)}',
+    '.tp .tag.no{background:#FBE6E5;color:var(--bad)}',
+    '.tp .tag.mid{background:#FDF3DF;color:var(--warn)}',
+    '.tp .chk{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:9px}',
+    '.tp .chk .c{background:#F7F9F8;border:1px solid var(--line);border-radius:9px;padding:10px 13px;display:flex;',
+    'align-items:center;gap:11px}',
+    '.tp .chk .c .t{font-size:11.5px;line-height:1.45;flex:1}',
+    '.tp .rates{display:grid;grid-template-columns:repeat(auto-fit,minmax(146px,1fr));gap:9px}',
+    '.tp .rate{background:#F7F9F8;border:1px solid var(--line);border-radius:9px;padding:11px 13px}',
+    '.tp .rate .l{font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);',
+    'line-height:1.5;min-height:25px}',
+    '.tp .rate .v{font-size:17px;font-weight:600;margin-top:4px;color:var(--teal-deep)}',
+    '.tp .step{display:flex;align-items:flex-start;gap:14px;padding:9px 0;border-bottom:1px dashed var(--line)}',
+    '.tp .step:last-child{border-bottom:none}',
+    '.tp .step .k{width:26px;height:26px;border-radius:50%;background:var(--teal-pale);color:var(--teal-deep);',
+    'font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}',
+    '.tp .step .t{flex:1;font-size:12.5px;line-height:1.5}',
+    '.tp .step .v{width:112px;text-align:right;font-size:13.5px;font-weight:600;flex-shrink:0;',
+    'font-family:"IBM Plex Mono",monospace}',
+    '.tp .cw{width:100%;overflow:hidden}.tp .cw svg{width:100%;height:auto;display:block}',
+    '.tp .lg{font-size:11px;color:var(--muted);margin:0 0 12px;display:flex;gap:15px;flex-wrap:wrap}',
+    '.tp .lg b{display:inline-flex;align-items:center;gap:7px;font-weight:500}',
+    '.tp .lg i{width:10px;height:10px;border-radius:3px;display:block}',
+    '.tp .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(80px);background:var(--ink);',
+    'color:#FFF;padding:13px 19px;border-radius:var(--r);font-size:13px;font-weight:500;z-index:60;',
+    'box-shadow:0 14px 40px rgba(0,0,0,.32);max-width:min(560px,92vw);opacity:0;transition:transform .22s,opacity .22s;line-height:1.55}',
+    '.tp .toast.on{transform:translateX(-50%) translateY(0);opacity:1}',
+    '.tp .toast.bad{background:#5A1010}.tp .toast.good{background:#0F3F2A}',
+    '@media (max-width:900px){',
+    '.tp .shell{flex-direction:column}',
+    '.tp .rail{width:100%!important;height:auto;position:static;flex-direction:row;align-items:center;overflow-x:auto;padding:8px 10px}',
+    '.tp .railBtn,.tp .railFoot,.tp .wordmark{display:none}',
+    '.tp .brand{padding:0 10px 0 0}.tp .plate{width:38px;height:38px;border-radius:10px}',
+    '.tp nav{flex-direction:row;gap:2px}',
+    '.tp nav a{border-left:none;border-bottom:3px solid transparent;border-radius:8px;padding:9px 12px}',
+    '.tp nav a.on{border-left:none;border-bottom-color:var(--sand)}',
+    '.tp header{padding:12px 15px}.tp .body{padding:14px 15px 40px}',
+    '.tp .ticket{grid-template-columns:1fr}.tp .ticket .side{border-left:none;border-top:1px dashed rgba(255,255,255,.22)}',
+    '.tp .amt{font-size:38px}.tp .pop{right:auto;left:0}}',
+    '@media (prefers-reduced-motion:reduce){.tp *{transition:none!important;animation:none!important}}'
+  ].join('');
+
+  /* ------------------------------------------------------------------ icons */
+  var ICONS = {
+    today: '<path d="M8 1.6v2M8 12.4v2M1.6 8h2M12.4 8h2M3.5 3.5l1.4 1.4M11.1 11.1l1.4 1.4M12.5 3.5l-1.4 1.4M4.9 11.1l-1.4 1.4"/><circle cx="8" cy="8" r="3"/>',
+    pool: '<path d="M2 5.2c0-1.5 2.7-2.7 6-2.7s6 1.2 6 2.7-2.7 2.7-6 2.7-6-1.2-6-2.7z"/><path d="M2 5.2v5.6c0 1.5 2.7 2.7 6 2.7s6-1.2 6-2.7V5.2"/><path d="M2 8c0 1.5 2.7 2.7 6 2.7s6-1.2 6-2.7"/>',
+    history: '<circle cx="8" cy="8" r="6.1"/><path d="M8 4.6V8l2.6 1.6"/>',
+    drivers: '<circle cx="6" cy="5.6" r="2.5"/><path d="M1.8 13.8c0-2.3 1.9-3.8 4.2-3.8s4.2 1.5 4.2 3.8"/><circle cx="12" cy="6.4" r="1.9"/><path d="M11.4 10.2c1.7.2 2.8 1.5 2.8 3.6"/>',
+    links: '<rect x="1.8" y="3.6" width="12.4" height="8.8" rx="1.8"/><path d="M1.8 6.9h12.4M4.4 10h2.8"/>',
+    remit: '<path d="M3 1.9h7l3 3v9.2H3z"/><path d="M9.6 1.9v3.3h3.3M5.4 9h5.2M5.4 11.3h3.4"/>',
+    recon: '<circle cx="8" cy="8" r="6.1"/><path d="M5.3 8.3l2 2 3.4-4"/>',
+    cal: '<rect x="2" y="3.4" width="12" height="10.6" rx="1.8"/><path d="M2 6.8h12M5.4 1.9v2.6M10.6 1.9v2.6"/>',
+    down: '<path d="M4 6.2L8 10l4-3.8"/>',
+    exp: '<path d="M8 10.6V2.2M4.9 5.3L8 2.2l3.1 3.1"/><path d="M2.4 10v2.4a1.6 1.6 0 001.6 1.6h8a1.6 1.6 0 001.6-1.6V10"/>',
+    find: '<circle cx="6.9" cy="6.9" r="4.4"/><path d="M10.2 10.2L14 14"/>',
+    tick: '<path d="M2.8 8.4l3 3 7-7.2"/>',
+    bang: '<circle cx="8" cy="8" r="6.2"/><path d="M8 4.8v4M8 10.8v.4"/>',
+    info: '<circle cx="8" cy="8" r="6.2"/><path d="M8 7.4v3.8M8 5.1v.4"/>',
+    copy: '<rect x="5.4" y="5.4" width="8.4" height="8.4" rx="1.6"/><path d="M10.6 5.4V3.8a1.6 1.6 0 00-1.6-1.6H3.8a1.6 1.6 0 00-1.6 1.6v5.2a1.6 1.6 0 001.6 1.6h1.6"/>',
+    send: '<path d="M14 2L7.2 8.9M14 2L9.7 14 7.2 8.9 2 6.4z"/>',
+    left: '<path d="M10 3L5 8l5 5"/>',
+    right: '<path d="M6 3l5 5-5 5"/>'
+  };
+  function ic(n, cls) {
+    return '<svg class="ic' + (cls ? ' ' + cls : '') + '" viewBox="0 0 16 16" fill="none" stroke="currentColor" ' +
+      'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + (ICONS[n] || '') + '</svg>';
+  }
+
+  var C = { teal: '#1F6E74', tealDeep: '#12474C', tealBright: '#35939A', navy: '#182643', red: '#C40202',
+    orange: '#EB9F0B', sand: '#F2C230', ok: '#1B7A4A', warn: '#9A6108', bad: '#C40202', muted: '#6E7A79',
+    soft: '#48524F', ink: '#111D1C', line: '#E1E6E4', grid: '#ECEFEE' };
+
+  var PAGES = [
+    { k: 'today', nav: 'Today', t: 'Today', eb: 'Transfer due', ic: 'today',
+      sub: 'The one amount to send to eNovate, and the bank deposit that unlocks it.', dated: 'day' },
+    { k: 'pool', nav: 'Pool', t: 'Collection Pool', eb: 'Held for eNovate', ic: 'pool',
+      sub: 'Driver cash collected through payment links that has not gone to eNovate yet. Match it to the bank, then settle on a working day.', dated: 'book' },
+    { k: 'history', nav: 'Settlement History', t: 'Settlement History', eb: 'Day by day', ic: 'history',
+      sub: 'One row per day: what landed, what was kept, what was sent, and the bank reference it went out on.', dated: 'thisWeek' },
+    { k: 'drivers', nav: 'Drivers', t: 'Drivers', eb: 'Balances', ic: 'drivers',
+      sub: 'What each driver owes right now, what we hold as credit, and who is blocked.', dated: null },
+    { k: 'links', nav: 'Payment Links', t: 'Payment Links', eb: 'Top-ups', ic: 'links',
+      sub: 'Every top-up link, what the driver paid, and whether that cash has reached the bank.', dated: 'thisWeek' },
+    { k: 'remit', nav: 'eNovate Sheet', t: 'eNovate Remittance Sheet', eb: 'Send with the transfer', ic: 'remit',
+      sub: 'The drivers whose money actually landed in our account, line by line — this is the sheet eNovate checks against the transfer.', dated: 'thisWeek' },
+    { k: 'recon', nav: 'Reconciliation', t: 'Reconciliation', eb: 'Whole book', ic: 'recon',
+      sub: 'Every identity must close at 0.00. Open only what is red.', dated: null }
+  ];
+  var PAGEMAP = {};
+  PAGES.forEach(function (p) { PAGEMAP[p.k] = p; });
+
+  var PRESETS = [
+    ['day', 'That day only'],
+    ['thisWeek', 'This work week'],
+    ['lastWeek', 'Last work week'],
+    ['cycle', 'Since the last transfer'],
+    ['last7', 'Last 7 days'],
+    ['thisMonth', 'This month'],
+    ['lastMonth', 'Last month'],
+    ['book', 'Whole book']
+  ];
+  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  var SYNC_MS = 20000;
+
+  /* ------------------------------------------------------------------ format */
+  function fmt(n) { return (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function pct(n) { return (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%'; }
+  function int(n) { return String(Number(n) || 0); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function iso(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function fromIso(s) { var a = String(s || '').split('-'); return new Date(+a[0], +a[1] - 1, +a[2]); }
+  function dm(s) { return s ? Number(String(s).slice(8, 10)) + ' ' + MON[Number(String(s).slice(5, 7)) - 1] : ''; }
+  function dow(s) { return s ? DOW[fromIso(s).getDay()] : ''; }
+  function w(v, max) { var p = max > 0 ? (Math.abs(Number(v) || 0) / max) * 100 : 0; return Math.min(100, p).toFixed(2) + '%'; }
+  function addD(s, n) { var d = fromIso(s); d.setDate(d.getDate() + n); return iso(d); }
+
+  /* --------------------------------------------------- the working calendar */
+  function parseWeek(txt) {
+    var s = String(txt === null || txt === undefined ? '' : txt).toLowerCase()
+      .replace(/[\u2013\u2014]/g, '-').replace(/\bto\b/g, '-').replace(/\bthrough\b/g, '-');
+    var names = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'], set = {}, n = 0, i;
+    var rng = /(sun|mon|tue|wed|thu|fri|sat)[a-z]*\s*-\s*(sun|mon|tue|wed|thu|fri|sat)[a-z]*/g, m;
+    while ((m = rng.exec(s)) !== null) {
+      var a = names.indexOf(m[1]), b = names.indexOf(m[2]), guard = 0, k = a;
+      while (guard++ < 8) { if (!set[k]) { set[k] = 1; n++; } if (k === b) break; k = (k + 1) % 7; }
+    }
+    for (i = 0; i < 7; i++) if (s.indexOf(names[i]) >= 0 && !set[i]) { set[i] = 1; n++; }
+    if (!n) { set[0] = set[1] = set[2] = set[3] = set[4] = 1; }
+    return set;
+  }
+  function weekText(set) { var o = []; for (var i = 0; i < 7; i++) if (set[i]) o.push(DOW[i]); return o.join(', '); }
+
+  /* ------------------------------------------------------------------ state */
+  var S = {
+    page: 'today', data: null, ready: false, busy: false, sig: '', tight: false, pop: false,
+    driver: 'all', focus: '', open: {}, rng: {}, filt: {}, lastErr: '', week: { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1 },
+    holidays: {}
+  };
+  PAGES.forEach(function (p) { if (p.dated) S.rng[p.k] = { preset: p.dated, start: '', end: '' }; });
+  S.filt = { drivers: 'all', links: 'all', remit: 'all' };
+
+  try {
+    var saved = JSON.parse(localStorage.getItem('taxisharm.portal.v15') || '{}');
+    if (saved.page && PAGEMAP[saved.page]) S.page = saved.page;
+    if (saved.tight) S.tight = true;
+    if (saved.rng) Object.keys(saved.rng).forEach(function (k) { if (S.rng[k]) S.rng[k] = saved.rng[k]; });
+  } catch (e) {}
+  function persist() {
+    try {
+      localStorage.setItem('taxisharm.portal.v15',
+        JSON.stringify({ page: S.page, tight: S.tight, rng: S.rng }));
+    } catch (e) {}
+  }
+
+  var root = null;                                   /* the <taxi-portal> element */
+  function q(id) { return root ? root.querySelector('#' + id) : null; }
+
+  function isWorkDay(d) {
+    if (!d) return false;
+    if (S.holidays[d]) return false;
+    return !!S.week[fromIso(d).getDay()];
+  }
+  function nextWorkDay(d) { var g = 0, x = d; while (!isWorkDay(x) && g++ < 40) x = addD(x, 1); return x; }
+  function prevWorkDay(d) { var g = 0, x = addD(d, -1); while (!isWorkDay(x) && g++ < 40) x = addD(x, -1); return x; }
+  function weekStart(d) { var x = fromIso(d), back = x.getDay(); x.setDate(x.getDate() - back); return iso(x); }
+
+  /* ------------------------------------------------------------------ ranges */
+  function rangeFor(preset, page) {
+    var t = iso(new Date()), d = S.data, minD = (d && d.filters && d.filters.minDate) || addD(t, -60);
+    if (preset === 'day') { var day = S.focus || (d && d.focus && d.focus.date) || t; return { start: day, end: day }; }
+    if (preset === 'thisWeek') return { start: weekStart(t), end: t };
+    if (preset === 'lastWeek') { var ws = weekStart(t); return { start: addD(ws, -7), end: addD(ws, -1) }; }
+    if (preset === 'last7') return { start: addD(t, -6), end: t };
+    if (preset === 'thisMonth') { var n = new Date(); return { start: iso(new Date(n.getFullYear(), n.getMonth(), 1)), end: t }; }
+    if (preset === 'lastMonth') {
+      var m = new Date();
+      return { start: iso(new Date(m.getFullYear(), m.getMonth() - 1, 1)), end: iso(new Date(m.getFullYear(), m.getMonth(), 0)) };
+    }
+    if (preset === 'cycle') {
+      var last = '';
+      if (d && d.days) d.days.forEach(function (r) { if (Number(r.net) > 0) last = r.date; });
+      return { start: last ? addD(last, 1) : addD(t, -6), end: t };
+    }
+    return { start: minD, end: t };                                  /* book */
+  }
+  function activeRange() {
+    var cfg = S.rng[S.page];
+    if (!cfg) return { start: '', end: '' };
+    if (cfg.preset === 'custom') return { start: cfg.start, end: cfg.end };
+    return rangeFor(cfg.preset, S.page);
+  }
+  function rangeLabel() {
+    var cfg = S.rng[S.page];
+    if (!cfg) return '';
+    for (var i = 0; i < PRESETS.length; i++) if (PRESETS[i][0] === cfg.preset) return PRESETS[i][1];
+    return 'Custom range';
+  }
+  function rangeText() {
+    var r = activeRange();
+    if (!r.start && !r.end) return 'Everything';
+    if (r.start === r.end) return dow(r.start) + ' ' + dm(r.start);
+    return dm(r.start) + '  \u2192  ' + dm(r.end);
+  }
+  function opts() {
+    var r = activeRange();
+    return { start: r.start, end: r.end, driverId: S.driver, focus: S.focus };
+  }
+
+  /* ------------------------------------------------------------------ server */
+  var live = !!(typeof google !== 'undefined' && google.script && google.script.run);
+  function call(fn, args, ok, fail) {
+    if (live) {
+      var r = google.script.run.withSuccessHandler(ok).withFailureHandler(fail);
+      r[fn].apply(r, args);
+      return;
+    }
+    setTimeout(function () {
+      try { ok(window.TAXI_DEMO.run(fn, args)); } catch (e) { fail(e); }
+    }, 180);
+  }
+
+  function load(silent) {
+    if (S.busy) return;
+    S.busy = true;
+    if (!silent && !S.data && root) root.querySelector('#content').innerHTML = '<div class="loading">Loading\u2026</div>';
+    call('getDashboardData', [opts()], onData, onFail);
+  }
+  function onData(d) {
+    S.busy = false; S.lastErr = '';
+    var changed = d.sig !== S.sig;
+    S.sig = d.sig; S.data = d;
+    if (d.settings && d.settings.workWeek) S.week = parseWeek(d.settings.workWeek);
+    if (d.settings && d.settings.holidays) {
+      S.holidays = {};
+      [].concat(d.settings.holidays).forEach(function (h) { S.holidays[h] = 1; });
+    }
+    if (!S.ready) { S.ready = true; render(); return; }
+    if (changed || !root.querySelector('.page')) render();
+    else drawHeader();
+  }
+  function onFail(e) {
+    S.busy = false;
+    var msg = (e && e.message) ? e.message : String(e);
+    S.lastErr = msg;
+    if (!S.data) root.querySelector('#content').innerHTML = '<div class="loading err">Could not load: ' + esc(msg) + '</div>';
+    else toast('Could not refresh: ' + msg, 'bad');
+    drawHeader();
+  }
+  function act(fn, args, msg) {
+    if (S.busy) return;
+    S.busy = true; drawHeader();
+    call(fn, args, function (d) {
+      S.busy = false; S.sig = d.sig; S.data = d;
+      render();
+      if (d.action) toast(d.action.message, d.action.ok ? 'good' : 'bad');
+      else if (msg) toast(msg, 'good');
+    }, onFail);
+  }
+
+  function toast(m, kind) {
+    var t = q('toast');
+    if (!t) return;
+    t.className = 'toast on ' + (kind || '');
+    t.textContent = m;
+    clearTimeout(t._h);
+    t._h = setTimeout(function () { t.className = 'toast ' + (kind || ''); }, 5200);
+  }
+
+  /* ------------------------------------------------------------ derived data */
+  function K() { return (S.data && S.data.kpi) || {}; }
+  function settings() { return (S.data && S.data.settings) || {}; }
+  function achFee() { var s = settings(); return Number(s.ach !== undefined ? s.ach : 50) || 0; }
+  function minTransfer() { var s = settings(); return Number(s.minTransfer !== undefined ? s.minTransfer : 50) || 0; }
+
+  /* Days that still hold eNovate money: not confirmed, blocked by variance, or carried. */
+  function poolRows() {
+    var d = S.data;
+    if (!d || !d.days) return [];
+    return d.days.filter(function (r) {
+      return Number(r.pending) > 0 || (Number(r.net) === 0 && Number(r.enov) + Number(r.fees) > 0);
+    });
+  }
+  function poolTotals() {
+    var k = K(), rows = poolRows();
+    var pending = 0, blocked = 0, carried = 0;
+    rows.forEach(function (r) {
+      var ent = Number(r.enov) + Number(r.fees);
+      if (Number(r.pending) > 0) {
+        if (r.confirmed && Number(r.variance) !== 0) blocked += Number(r.pending);
+        else pending += Number(r.pending);
+      } else if (Number(r.net) === 0) carried += ent;
+    });
+    var total = Number(k.carried || 0) + Number(k.pending || 0);
+    var ready = Math.max(0, total - pending - blocked);
+    return { total: total, pending: pending, blocked: blocked, carried: carried, ready: ready };
+  }
+  function nextTransferDay() {
+    var t = iso(new Date());
+    return isWorkDay(t) ? t : nextWorkDay(t);
+  }
+  function carriedFrom() {
+    /* the non-working days whose cash rolls into the next transfer */
+    var day = nextTransferDay(), out = [], x = prevWorkDay(day);
+    var g = 0, cur = addD(day, -1);
+    while (cur > x && g++ < 10) { out.push(cur); cur = addD(cur, -1); }
+    return out.reverse();
+  }
+  function landedPayments() {
+    var d = S.data;
+    if (!d || !d.payments) return [];
+    return d.payments.filter(function (p) { return p.landed; });
+  }
+  function driverIndex() {
+    var m = {};
+    ((S.data && S.data.drivers) || []).forEach(function (r) { m[r.id] = r; });
+    return m;
+  }
+  function badCount() {
+    var d = S.data;
+    if (!d) return 0;
+    var k = d.kpi || {};
+    return ((d.checks || []).filter(function (c) { return !c.pass; }).length) +
+      Number(k.badDate || 0) + Number(k.noRate || 0) + Number(k.badTrip || 0) + Number(k.dupLinks || 0) +
+      (Number(k.variance || 0) !== 0 ? 1 : 0);
+  }
+
+  /* ------------------------------------------------------------------ chrome */
+  function drawRail() {
+    var logo = window.TAXI_LOGO || 'assets/logo.png';
+    var bad = badCount(), pool = poolTotals(), nd = nextTransferDay(), carry = carriedFrom();
+    var nav = PAGES.map(function (p, i) {
+      var tail = (p.k === 'recon' && bad) ? '<span class="cnt">' + bad + '</span>'
+        : '<span class="kb">' + (i + 1) + '</span>';
+      return '<a data-go="' + p.k + '" class="' + (S.page === p.k ? 'on' : '') + '">' + ic(p.ic) +
+        '<span class="tx">' + p.nav + '</span>' + tail + '</a>';
+    }).join('');
+    var note = 'on ' + dow(nd) + ' ' + dm(nd) +
+      (carry.length ? ' \u00b7 carries ' + carry.map(function (x) { return dow(x); }).join(' + ') : '') +
+      ' \u00b7 one ACH fee';
+    return '<aside class="rail">' +
+      '<button class="railBtn" data-act="rail" title="Collapse">' + ic('left') + '</button>' +
+      '<div class="brand"><span class="plate" data-act="home"><img src="' + esc(logo) + '" alt="Taxi Sharm"></span>' +
+      '<span class="wordmark"><b>Taxi Sharm</b><span>Settlement</span></span></div>' +
+      '<nav>' + nav + '</nav>' +
+      '<div class="railFoot" data-go="pool"><div class="l">Ready to send</div>' +
+      '<div class="v num">' + fmt(pool.ready) + '</div><div class="n">' + esc(note) + '</div></div>' +
+      '</aside>';
+  }
+
+  function headerControls(p) {
+    var h = '';
+    var d = S.data || {};
+    if (p.k === 'today') {
+      var day = (d.focus && d.focus.date) || iso(new Date());
+      h += '<div class="rangebox" style="display:flex;gap:6px;align-items:center">' +
+        '<button class="btn btn-ghost" data-act="dayprev" title="Previous day">' + ic('left') + '</button>' +
+        '<button class="rangebtn" data-act="dayreset"><span class="rl"><b>' + esc(dow(day) + ' ' + dm(day)) +
+        '</b><i>' + (day === iso(new Date()) ? 'Today' : 'Selected day') + '</i></span></button>' +
+        '<button class="btn btn-ghost" data-act="daynext" title="Next day">' + ic('right') + '</button></div>';
+    } else if (p.dated) {
+      var cfg = S.rng[p.k];
+      h += '<div class="rangebox"><button class="rangebtn' + (S.pop ? ' act' : '') + '" data-act="pop">' +
+        ic('cal') + '<span class="rl"><b>' + esc(rangeText()) + '</b><i>' + esc(rangeLabel()) + '</i></span>' +
+        ic('down') + '</button>' +
+        (S.pop ? '<div class="pop">' + PRESETS.map(function (x) {
+          var r = rangeFor(x[0], p.k);
+          return '<div class="opt' + (cfg.preset === x[0] ? ' on' : '') + '" data-preset="' + x[0] + '">' +
+            esc(x[1]) + '<span>' + (r.start === r.end ? dm(r.start) : dm(r.start) + ' \u2013 ' + dm(r.end)) + '</span></div>';
+        }).join('') + '<div class="cust"><input type="date" value="' + esc(activeRange().start) +
+          '" data-date="start"><span style="color:' + C.muted + '">\u2192</span><input type="date" value="' +
+          esc(activeRange().end) + '" data-date="end"></div></div>' : '') + '</div>';
+    } else {
+      h += '<span class="pill">' + ic(p.ic) + (p.k === 'drivers' ? 'As of today' : 'Whole book') + '</span>';
+    }
+    if (S.driver !== 'all') h += '<button class="chip on" data-act="cleardriver">' + esc(S.driver) + ' \u2715</button>';
+    h += '<button class="btn btn-accent" data-act="export">' + ic('exp') + 'Export ' + exportName(p.k) + '</button>';
+    return h;
+  }
+  function exportName(k) {
+    return { today: 'today', pool: 'the pool', history: 'history', drivers: 'drivers',
+      links: 'links', remit: 'for eNovate', recon: 'checks' }[k] || '';
+  }
+  function headerSub(p) {
+    var d = S.data, k = K();
+    if (!d) return p.sub;
+    if (p.k === 'pool') {
+      var pl = poolTotals();
+      return 'Held for eNovate right now: ' + fmt(pl.total) + ' EGP. Next transfer day is ' +
+        dow(nextTransferDay()) + ' ' + dm(nextTransferDay()) + '.';
+    }
+    if (p.k === 'drivers') {
+      return int((d.drivers || []).length) + ' drivers \u00b7 ' + fmt(k.outstanding) +
+        ' outstanding \u00b7 ' + int(k.blocked) + ' blocked.';
+    }
+    if (p.k === 'links') {
+      var l = d.payments || [], landed = l.filter(function (x) { return x.landed; }).length;
+      return int(l.length) + ' paid links in range \u00b7 ' + landed + ' in the bank \u00b7 ' +
+        (l.length - landed) + ' in transit.';
+    }
+    if (p.k === 'remit') {
+      var lp = landedPayments();
+      return int(lp.length) + ' payments landed in range \u00b7 eNovate share ' + fmt(k.enovRel) +
+        ' + fees ' + fmt(k.enovFees) + '.';
+    }
+    if (p.k === 'history') {
+      return int((d.days || []).length) + ' days \u00b7 ' + int(k.transfers || 0) + ' transfers sent \u00b7 ' +
+        fmt(k.transferred) + ' to eNovate.';
+    }
+    if (p.k === 'recon') {
+      var bad = (d.checks || []).filter(function (c) { return !c.pass; }).length;
+      return bad ? bad + ' identity check(s) failing — do not transfer until they close at 0.00.'
+        : 'All ' + (d.checks || []).length + ' identities close at 0.00.';
+    }
+    if (p.k === 'today') {
+      var f = d.focus;
+      return f ? (f.isToday ? 'Today, ' : '') + dow(f.date) + ' ' + dm(f.date) +
+        (isWorkDay(f.date) ? ' is a working day \u2014 a transfer can go out.'
+          : ' is not a working day \u2014 its cash carries to ' + dow(nextWorkDay(f.date)) + ' ' + dm(nextWorkDay(f.date)) + '.')
+        : p.sub;
+    }
+    return p.sub;
+  }
+  function drawHeader() {
+    var p = PAGEMAP[S.page];
+    var el = q('hdr');
+    if (!el) return;
+    el.innerHTML = '<div class="ht"><div class="eyebrow">' + esc(p.eb) + '</div><h1>' + esc(p.t) + '</h1>' +
+      '<p class="sub">' + esc(headerSub(p)) + '</p></div><div class="hr">' + headerControls(p) + '</div>';
+  }
+
+  /* ------------------------------------------------------------------ pages */
+  function panel(title, inner, note) {
+    return '<section class="panel"><h2>' + esc(title) + (note ? '<em>' + esc(note) + '</em>' : '') + '</h2>' + inner + '</section>';
+  }
+  function empty(title, msg) {
+    return '<section class="panel"><h2>' + esc(title) + '</h2><div class="loading" style="padding:26px">' +
+      esc(msg) + '</div></section>';
+  }
+  function noteLine(txt) { return '<p class="note">' + ic('info') + '<span>' + txt + '</span></p>'; }
+
+  /* ---- TODAY ---- */
+  function pgToday(d) {
+    var t = d.focus;
+    if (!t) return empty('Today', 'Nothing on this day.');
+    var work = isWorkDay(t.date), cls, st;
+    if (!t.hasRow && Number(t.pending) === 0) { cls = 'hold'; st = 'No paid link landed on this day.'; }
+    else if (!t.confirmed) { cls = 'hold'; st = 'Type the bank deposit below \u2014 ' + fmt(t.pending) + ' is waiting on it.'; }
+    else if (Number(t.variance) !== 0) { cls = 'stop'; st = 'The deposit is off by ' + fmt(t.variance) + '. Fix it before sending anything.'; }
+    else if (!work) { cls = 'hold'; st = dow(t.date) + ' is not a working day. This money leaves on ' + dow(nextWorkDay(t.date)) + ' ' + dm(nextWorkDay(t.date)) + ', with one ACH fee.'; }
+    else if (Number(t.net) === 0) { cls = 'hold'; st = 'Under the ' + fmt(minTransfer()) + ' minimum after the ' + fmt(achFee()) + ' bank charge. Carried forward.'; }
+    else if (t.loggedAt) { cls = 'go'; st = 'Already sent \u00b7 ' + esc(t.ref); }
+    else { cls = 'go'; st = 'Clear to send.'; }
+
+    var lines = [['Trips', int(t.trips), 0], ['Rider fares', fmt(t.gross), 0], ['Debt earned', fmt(t.debt), 1],
+      ['In the bank', fmt(t.deposit), 0], ['Collected', fmt(t.matched), 0], ['Driver credit', fmt(t.credit), 1],
+      ['We keep', fmt(t.kept), 0], ['eNovate share', fmt(t.enov), 0], ['eNovate fee', fmt(t.fees), 0],
+      ['ACH fee', '\u2212 ' + fmt(t.ach), 0]];
+
+    var ticket = '<section class="ticket"><div class="stub">' +
+      '<div class="eb">' + (t.isToday ? 'Today' : 'Selected day') + ' \u00b7 ' + esc(dow(t.date) + ' ' + t.date) + '</div>' +
+      '<div class="amt num">' + fmt(t.net) + '<sup>EGP</sup></div>' +
+      '<div class="st ' + cls + '">' + ic(cls === 'go' ? 'tick' : 'bang') + '<span>' + st + '</span></div>' +
+      '<div class="acts">' +
+      (Number(t.net) > 0 ? '<button class="btn btn-accent" data-act="copy" data-v="' + Number(t.net).toFixed(2) + '">' +
+        ic('copy') + 'Copy amount</button>' : '') +
+      '<button class="btn btn-ghost" data-go="pool">' + ic('pool') + 'Open the pool</button></div></div>' +
+      '<div class="side"><div class="eb" style="color:#8DBABC">How it adds up</div>' +
+      '<div class="meter" style="margin-top:10px">' + lines.map(function (l) {
+        return '<div class="ln' + (l[2] ? ' gap' : '') + '"><span class="k">' + l[0] + '</span><span class="v num">' + l[1] + '</span></div>';
+      }).join('') + '<div class="ln key"><span class="k">Send to eNovate</span><span class="v num">' + fmt(t.net) +
+      '</span></div></div></div></section>';
+
+    var okDep = t.confirmed && Number(t.variance) === 0;
+    var settle = panel('Match the bank \u00b7 ' + t.date,
+      '<div class="frm"><div class="fld"><label>Bank deposit \u00b7 expected ' + fmt(t.expected) + '</label>' +
+      '<input id="depAmt" type="number" step="0.01" inputmode="decimal" placeholder="' + fmt(t.expected) + '" value="' +
+      (t.confirmed ? Number(t.deposit).toFixed(2) : '') + '"></div>' +
+      '<button class="btn btn-primary" data-act="savedep" data-day="' + esc(t.date) + '"' + (S.busy ? ' disabled' : '') + '>Save deposit</button>' +
+      '<button class="btn btn-ghost" data-act="useexp" data-v="' + Number(t.expected).toFixed(2) + '">Use expected</button>' +
+      (t.confirmed ? '<span class="tag ' + (okDep ? 'ok' : 'no') + '" style="height:37px;display:inline-flex;align-items:center">' +
+        (okDep ? 'Variance 0.00' : 'Off by ' + fmt(t.variance)) + '</span>' : '') + '</div>' +
+      (t.canSend ? '<div class="frm" style="margin-top:14px;padding-top:14px;border-top:1px dashed ' + C.line + '">' +
+        '<div class="fld"><label>Amount actually sent · suggested ' + fmt(t.net) + '</label>' +
+        '<input id="trAmt" type="number" step="0.01" inputmode="decimal" value="' + Number(t.net).toFixed(2) + '"></div>' +
+        '<div class="fld"><label>Bank reference</label>' +
+        '<input id="trRef" type="text" placeholder="ACH-' + t.date.replace(/-/g, '') + '-01" value="' + esc(t.ref || '') + '"></div>' +
+        '<button class="btn btn-primary" data-act="logtr" data-day="' + esc(t.date) + '" data-net="' +
+        Number(t.net).toFixed(2) + '"' + (S.busy ? ' disabled' : '') + '>' +
+        ic('send') + 'Confirm &amp; log</button></div>' : '') +
+      noteLine('Paymob deposits the <b>link amounts</b> (debt + ' + fmt(settings().linkFee || 1.5) +
+        ' per link), not the bare debt. That is why the expected figure is higher than what the drivers owed.'));
+
+    return ticket + '<div class="g2">' + settle + weekStrip() + '</div>' + trend(d);
+  }
+
+  function weekStrip() {
+    var t = iso(new Date()), ws = weekStart(t), days = [], i;
+    for (i = 0; i < 7; i++) days.push(addD(ws, i));
+    var byDay = {};
+    ((S.data && S.data.days) || []).forEach(function (r) { byDay[r.date] = r; });
+    return panel('This work week', '<div class="wk">' + days.map(function (x) {
+      var r = byDay[x], work = isWorkDay(x);
+      var cl = (work ? 'pay' : 'off') + (x === t ? ' today' : '');
+      var v = r ? (Number(r.net) > 0 ? fmt(r.net) : (Number(r.enov) + Number(r.fees) > 0 ? '\u00b7' : '\u2014')) : '\u2014';
+      return '<div class="' + cl + '" title="' + esc(x + (work ? ' \u2014 working day' : ' \u2014 no transfer')) + '">' +
+        '<div class="d">' + dow(x) + '</div><div class="m">' + v + '</div></div>';
+    }).join('') + '</div>' +
+      noteLine('Working week: <b>' + esc(weekText(S.week)) + '</b>. Friday and Saturday cash is collected but ' +
+        'carried \u2014 it leaves with Sunday\u2019s single transfer, so we pay one ' + fmt(achFee()) + ' bank charge, not three.'));
+  }
+
+  function trend(d) {
+    var s = (d.series || []).slice(-21);
+    if (!s.length) return '';
+    var defs = [['gross', 'Rider fares', C.tealBright], ['matched', 'Collected', C.navy], ['net', 'Sent to eNovate', C.tealDeep]];
+    return panel('Day by day', legend(defs) + barChart(s, defs));
+  }
+
+  /* ---- POOL ---- */
+  function pgPool(d) {
+    var pl = poolTotals(), nd = nextTransferDay(), carry = carriedFrom();
+    var ach = achFee();
+    var net = Math.max(0, pl.ready - ach);
+    var segs = [[pl.ready, C.tealDeep, 'Confirmed \u00b7 ready'], [pl.pending, C.orange, 'Waiting on a bank deposit'],
+      [pl.blocked, C.red, 'Held by a variance']];
+    var card = '<section class="poolcard"><div><div class="eyebrow" style="font-size:8.5px;font-weight:700;' +
+      'letter-spacing:.16em;text-transform:uppercase;color:' + C.teal + '">Collected, not yet sent</div>' +
+      '<div class="big num">' + fmt(pl.total) + '<sup>EGP</sup></div>' +
+      '<div class="keys">' + segs.map(function (x) {
+        return '<div><i style="background:' + x[1] + '"></i>' + x[2] + ' <b>' + fmt(x[0]) + '</b></div>';
+      }).join('') + '</div></div>' +
+      '<div><div class="bar">' + segs.map(function (x) {
+        return '<i style="width:' + w(x[0], pl.total || 1) + ';background:' + x[1] + '"></i>';
+      }).join('') + '</div>' +
+      '<div class="nextbox" style="margin-top:14px">' +
+      '<div class="eb" style="color:' + C.teal + '">Next transfer \u00b7 ' + esc(dow(nd) + ' ' + dm(nd)) + '</div>' +
+      '<div class="row"><span class="k">Confirmed and ready</span><span class="v num">' + fmt(pl.ready) + '</span></div>' +
+      '<div class="row"><span class="k">ACH bank charge \u00b7 one per transfer</span><span class="v num">\u2212 ' + fmt(ach) + '</span></div>' +
+      '<div class="row tot"><span class="k">Leaves the account</span><span class="v num">' + fmt(net) + '</span></div>' +
+      (carry.length ? '<p class="note" style="margin-top:9px">' + ic('info') + '<span>Includes ' +
+        carry.map(function (x) { return dow(x) + ' ' + dm(x); }).join(' and ') +
+        ' \u2014 non-working days, so their cash rides along on one fee.</span></p>' : '') +
+      '<div class="acts" style="margin-top:12px">' +
+      (net > 0 ? '<button class="btn btn-accent" data-act="copy" data-v="' + net.toFixed(2) + '">' + ic('copy') + 'Copy ' + fmt(net) + '</button>' : '') +
+      '<button class="btn btn-primary" data-act="gotoday" data-day="' + esc(nd) + '">' + ic('send') + 'Settle ' + dow(nd) + '</button>' +
+      '</div></div></div></section>';
+
+    var rows = poolRows();
+    var tbl = rows.length ? '<div class="scroll list"><table class="data"><thead><tr>' +
+      th('Day') + th('Working day') + th('Bank deposit', 1) + th('Expected', 1) + th('Variance', 1) +
+      th('eNovate held', 1) + th('Why it is still here') + '</tr></thead><tbody>' +
+      rows.map(function (r) {
+        var ent = Number(r.enov) + Number(r.fees), work = isWorkDay(r.date);
+        var why, bd;
+        if (!r.confirmed) { why = 'No bank deposit saved yet'; bd = 'wait'; }
+        else if (Number(r.variance) !== 0) { why = 'Deposit off by ' + fmt(r.variance) + ' \u2014 held back'; bd = 'bad'; }
+        else if (!work) { why = 'Non-working day \u2014 leaves on ' + dow(nextWorkDay(r.date)) + ' ' + dm(nextWorkDay(r.date)); bd = 'mute'; }
+        else { why = 'Below the ' + fmt(minTransfer()) + ' minimum after the fee'; bd = 'wait'; }
+        return '<tr><td class="num"><a class="lk" data-act="gotoday" data-day="' + esc(r.date) + '" style="color:' +
+          C.tealDeep + ';font-weight:600">' + esc(r.date) + '</a></td>' +
+          '<td>' + dow(r.date) + (work ? '' : ' <span class="bdg mute">off</span>') + '</td>' +
+          '<td class="right num">' + (r.confirmed ? fmt(r.deposit) : '\u2014') + '</td>' +
+          '<td class="right num" style="color:' + C.muted + '">' + fmt(r.expected) + '</td>' +
+          '<td class="right num" style="font-weight:600;color:' + (r.confirmed && Number(r.variance) !== 0 ? C.bad : C.ok) + '">' +
+          (r.confirmed ? fmt(r.variance) : '\u2014') + '</td>' +
+          '<td class="right num" style="font-weight:600">' + fmt(ent) + '</td>' +
+          '<td><span class="bdg ' + bd + '">' + esc(why) + '</span></td></tr>';
+      }).join('') + '</tbody></table></div>'
+      : '<div class="loading" style="padding:24px">Nothing is being held back. Every confirmed day has been settled.</div>';
+
+    var src = panel('Where the pool came from',
+      '<div class="scroll"><table class="data"><tbody>' +
+      [['Debt collected from drivers (matched)', K().matched], ['Driver credit we hold', K().credit],
+       ['eNovate share of that cash', K().enovRel], ['eNovate half of the link fees', K().enovFees],
+       ['eNovate entitlement from landed cash', K().enovEnt], ['Already sent to eNovate', K().transferred],
+       ['ACH fees paid to the bank', K().ach]].map(function (r, i) {
+        var key = i === 4 || i === 5;
+        return '<tr' + (key ? '' : ' class="dim"') + '><td' + (key ? ' style="font-weight:600"' : '') + '>' + esc(r[0]) +
+          '</td><td class="right num"' + (key ? ' style="font-weight:600"' : '') + '>' + fmt(r[1]) + '</td></tr>';
+      }).join('') + '</tbody></table></div>' +
+      noteLine('The transfer is always derived as <b>cumulative entitlement \u2212 already sent</b>. That is why a ' +
+        'backdated trip or a corrected fare can never double-pay: the next transfer simply picks up the difference.'));
+
+    return card + panel('Days still holding eNovate money', tbl, rows.length + ' day(s)') +
+      '<div class="g2">' + src + weekStrip() + '</div>';
+  }
+
+  /* ---- HISTORY ---- */
+  function pgHistory(d) {
+    var k = K();
+    var strip = '<div class="strip">' + [['Trips', int(k.trips), ''], ['Rider fares', fmt(k.gross), 'EGP'],
+      ['Collected', fmt(k.matched), 'from drivers'], ['We kept', fmt(k.zedsCash), 'our side'],
+      ['Sent to eNovate', fmt(k.transferred), int(k.transfers || 0) + ' transfers'],
+      ['ACH fees', fmt(k.ach), 'bank charges']].map(function (c) {
+      return '<div><div class="l">' + esc(c[0]) + '</div><div class="v num">' + c[1] + '</div><div class="n">' + esc(c[2]) + '</div></div>';
+    }).join('') + '</div>';
+    if (!d.days.length) return strip + empty('Settlement history', 'No settlement day in this range.');
+    var t = { dep: 0, x: 0, m: 0, kp: 0, e: 0, f: 0, a: 0, n: 0 };
+    var rows = d.days.map(function (r) {
+      t.dep += +r.deposit; t.x += +r.expected; t.m += +r.matched; t.kp += +r.kept;
+      t.e += +r.enov; t.f += +r.fees; t.a += +r.ach; t.n += +r.net;
+      var sent = Number(r.net) > 0, work = isWorkDay(r.date);
+      var bd = sent ? 'good' : (r.confirmed ? (Number(r.variance) !== 0 ? 'bad' : 'wait') : 'wait');
+      return '<tr' + (work ? '' : ' class="dim"') + '><td class="num"><a class="lk" data-act="gotoday" data-day="' +
+        esc(r.date) + '" style="color:' + C.tealDeep + ';font-weight:600">' + esc(r.date) + '</a>' +
+        '<span style="color:' + C.muted + ';font-size:10.5px;margin-left:7px">' + dow(r.date) + '</span></td>' +
+        '<td class="right num">' + (r.confirmed ? fmt(r.deposit) : '\u2014') + '</td>' +
+        '<td class="right num" style="color:' + C.muted + '">' + fmt(r.expected) + '</td>' +
+        '<td class="right num" style="font-weight:600;color:' + (Number(r.variance) === 0 ? C.ok : C.bad) + '">' +
+        (r.confirmed ? fmt(r.variance) : '\u2014') + '</td>' +
+        '<td class="right num">' + fmt(r.matched) + '</td>' +
+        '<td class="right num" style="font-weight:600">' + fmt(r.kept) + '</td>' +
+        '<td class="right num" style="font-weight:600">' + fmt(r.enov) + '</td>' +
+        '<td class="right num" style="color:' + C.muted + '">' + fmt(r.fees) + '</td>' +
+        '<td class="right num">' + fmt(r.ach) + '</td>' +
+        '<td class="right num" style="font-weight:600;color:' + C.tealDeep + '">' + fmt(r.net) + '</td>' +
+        '<td><span class="bdg ' + bd + '">' + esc(r.state) + '</span></td>' +
+        '<td class="num" style="color:' + C.muted + ';font-size:11px">' + esc(r.ref || '\u2014') + '</td></tr>';
+    }).join('');
+    var tbl = '<div class="scroll list"><table class="data"><thead><tr>' +
+      th('Date') + th('In the bank', 1) + th('Expected', 1) + th('Variance', 1) + th('Collected', 1) +
+      th('We keep', 1) + th('eNovate', 1) + th('Their fee', 1) + th('ACH', 1) + th('Sent', 1) +
+      th('State') + th('Reference') + '</tr></thead><tbody>' + rows +
+      '<tr class="tot"><td>TOTAL</td><td class="right num">' + fmt(t.dep) + '</td><td class="right num">' + fmt(t.x) +
+      '</td><td class="right num">' + fmt(t.dep - t.x) + '</td><td class="right num">' + fmt(t.m) +
+      '</td><td class="right num">' + fmt(t.kp) + '</td><td class="right num">' + fmt(t.e) +
+      '</td><td class="right num">' + fmt(t.f) + '</td><td class="right num">' + fmt(t.a) +
+      '</td><td class="right num">' + fmt(t.n) + '</td><td></td><td></td></tr></tbody></table></div>';
+    return strip + panel('Settlement history', tbl, 'Click a date to settle that day') + trend(d);
+  }
+
+  /* ---- DRIVERS ---- */
+  function pgDrivers(d) {
+    if (!d.drivers.length) return empty('Drivers', 'No drivers yet.');
+    var t = { tr: 0, e: 0, c: 0, o: 0, cr: 0, h: 0 };
+    var rows = d.drivers.map(function (r) {
+      t.tr += +r.trips; t.e += +r.earned; t.c += +r.collected; t.o += +r.outstanding; t.cr += +r.credit; t.h += +r.held;
+      var cls = r.status === 'Blocked' ? 'bad' : (r.status === 'Owing' ? 'wait' : 'good');
+      return '<tr data-k="' + esc([r.id, r.name, r.phone || ''].join(' ').toLowerCase()) + '" data-s="' + esc(r.status) + '">' +
+        '<td style="font-weight:500"><a class="lk" data-act="driver" data-v="' + esc(r.id) + '">' + esc(r.name) + '</a>' +
+        '<span class="num" style="color:' + C.muted + ';font-size:10.5px;margin-left:8px">' + esc(r.id) + '</span></td>' +
+        '<td class="num" style="color:' + C.soft + '">' + esc(r.phone || '\u2014') + '</td>' +
+        '<td class="right num" style="color:' + C.soft + '">' + int(r.trips) + '</td>' +
+        '<td class="right num">' + fmt(r.earned) + '</td>' +
+        '<td class="right num">' + fmt(r.collected) + '</td>' +
+        '<td class="right num" style="font-weight:600;color:' + (Number(r.outstanding) > 0 ? C.bad : C.ok) + '">' + fmt(r.outstanding) + '</td>' +
+        '<td class="right num">' + fmt(r.credit) + '</td><td class="right num">' + fmt(r.held) + '</td>' +
+        '<td class="right"><span class="bdg ' + cls + '">' + esc(r.status) + '</span></td></tr>';
+    }).join('');
+    var n = function (s) { return d.drivers.filter(function (r) { return r.status === s; }).length; };
+    var tbl = panel('Drivers',
+      tools('drvSearch', 'tblDrivers', 'ID, name or mobile\u2026',
+        [['All ' + d.drivers.length, 'all'], ['Blocked ' + n('Blocked'), 'Blocked'], ['Owing ' + n('Owing'), 'Owing'],
+         ['Clear ' + n('Clear'), 'Clear']]) +
+      '<div class="scroll list"><table class="data" id="tblDrivers"><thead><tr>' +
+      th('Driver') + th('Mobile') + th('Trips', 1) + th('Debt earned', 1) + th('Collected', 1) +
+      th('Outstanding', 1) + th('Credit', 1) + th('Disputed', 1) + th('Status', 1) + '</tr></thead><tbody>' + rows +
+      '<tr class="tot"><td>TOTAL</td><td></td><td class="right num">' + int(t.tr) + '</td><td class="right num">' + fmt(t.e) +
+      '</td><td class="right num">' + fmt(t.c) + '</td><td class="right num">' + fmt(t.o) +
+      '</td><td class="right num">' + fmt(t.cr) + '</td><td class="right num">' + fmt(t.h) +
+      '</td><td></td></tr></tbody></table></div>');
+    var top = d.drivers.slice(0, 8), max = 1;
+    top.forEach(function (r) { if (+r.outstanding > max) max = +r.outstanding; });
+    var bars = panel('Highest outstanding', top.map(function (r) {
+      var col = r.status === 'Blocked' ? C.red : (+r.outstanding > 0 ? C.orange : C.ok);
+      return '<div class="wf"><div class="lb">' + esc(r.name) + '</div><div class="tk"><div style="width:' +
+        w(r.outstanding, max) + ';background:' + col + '"></div></div><div class="vl">' + fmt(r.outstanding) + '</div></div>';
+    }).join(''));
+    return tbl + bars;
+  }
+
+  /* ---- LINKS ---- */
+  function pgLinks(d) {
+    if (!d.payments.length) return empty('Payment links', 'No paid link in this range.');
+    var rows = d.payments.map(function (l) {
+      var ok = Math.abs((+l.zeds + +l.enov + +l.credit) - +l.link) < 0.005;
+      return '<tr data-k="' + esc([l.id, l.driver, l.name || '', l.paid, l.deposit].join(' ').toLowerCase()) +
+        '" data-s="' + (l.landed ? 'Deposited' : 'In transit') + '">' +
+        '<td class="num">' + esc(l.id) + '</td><td style="font-weight:500">' + esc(l.name || l.driver) + '</td>' +
+        '<td class="right num" style="color:' + C.soft + '">' + fmt(l.base) + '</td>' +
+        '<td class="right num" style="font-weight:600;color:' + C.tealDeep + '">' + fmt(l.link) + '</td>' +
+        '<td class="num">' + esc(l.paid) + '</td><td class="num">' + esc(l.deposit) + '</td>' +
+        '<td class="right num">' + fmt(l.zeds) + '</td><td class="right num">' + fmt(l.enov) + '</td>' +
+        '<td class="right num">' + fmt(l.credit) + '</td>' +
+        '<td class="right" style="color:' + (ok ? C.ok : C.bad) + '">' + ic(ok ? 'tick' : 'bang') + '</td>' +
+        '<td class="right"><span class="bdg ' + (l.landed ? 'good' : 'wait') + '">' +
+        (l.landed ? 'In the bank' : 'In transit') + '</span></td></tr>';
+    }).join('');
+    var landed = d.payments.filter(function (x) { return x.landed; }).length;
+    return panel('Payment links',
+      tools('lnkSearch', 'tblLinks', 'Link, driver or date\u2026',
+        [['All ' + d.payments.length, 'all'], ['In the bank ' + landed, 'Deposited'],
+         ['In transit ' + (d.payments.length - landed), 'In transit']]) +
+      '<div class="scroll list"><table class="data" id="tblLinks"><thead><tr>' +
+      th('Link') + th('Driver') + th('Debt', 1) + th('Link amount', 1) + th('Paid') + th('Deposit') +
+      th('Ours', 1) + th('eNovate', 1) + th('Credit', 1) + th('Foots', 1) + th('State', 1) +
+      '</tr></thead><tbody>' + rows + '</tbody></table></div>' +
+      noteLine('<b>Foots</b> is the row check: our side + eNovate side + driver credit must equal the link amount ' +
+        'exactly. Paymob\u2019s own commission is charged to the driver at checkout and never touches our account.'));
+  }
+
+  /* ---- eNOVATE REMITTANCE ---- */
+  function pgRemit(d) {
+    var lp = landedPayments(), idx = driverIndex(), k = K();
+    var r = activeRange();
+    var tot = { base: 0, link: 0, enov: 0, zeds: 0, credit: 0 };
+    lp.forEach(function (l) { tot.base += +l.base; tot.link += +l.link; tot.enov += +l.enov; tot.zeds += +l.zeds; tot.credit += +l.credit; });
+    var head = '<div class="strip">' + [
+      ['Payments landed', int(lp.length), 'links'],
+      ['Cash in our bank', fmt(tot.link), 'link amounts'],
+      ['Debt cleared', fmt(tot.base), 'driver debt'],
+      ['eNovate side', fmt(tot.enov), 'of the landed cash'],
+      ['Our side', fmt(tot.zeds), 'stays with us'],
+      ['Sent to eNovate', fmt(k.transferred), 'in this range']
+    ].map(function (c) {
+      return '<div><div class="l">' + esc(c[0]) + '</div><div class="v num">' + c[1] + '</div><div class="n">' + esc(c[2]) + '</div></div>';
+    }).join('') + '</div>';
+
+    if (!lp.length) return head + empty('eNovate remittance sheet', 'No driver payment has landed in this range yet.');
+
+    var byDriver = {};
+    lp.forEach(function (l) {
+      var g = byDriver[l.driver] || (byDriver[l.driver] = { id: l.driver, name: l.name || l.driver, n: 0, base: 0, link: 0, enov: 0 });
+      g.n++; g.base += +l.base; g.link += +l.link; g.enov += +l.enov;
+    });
+    var groups = Object.keys(byDriver).map(function (x) { return byDriver[x]; })
+      .sort(function (a, b) { return b.link - a.link; });
+
+    var rows = lp.map(function (l) {
+      var dr = idx[l.driver] || {};
+      return '<tr data-k="' + esc([l.id, l.driver, l.name || '', l.paid, l.deposit].join(' ').toLowerCase()) + '">' +
+        '<td class="num">' + esc(l.deposit) + '</td>' +
+        '<td class="num" style="color:' + C.soft + '">' + esc(l.driver) + '</td>' +
+        '<td style="font-weight:500">' + esc(l.name || '\u2014') + '</td>' +
+        '<td class="num" style="color:' + C.soft + '">' + esc(dr.phone || '\u2014') + '</td>' +
+        '<td class="num" style="color:' + C.muted + '">' + esc(l.id) + '</td>' +
+        '<td class="num">' + esc(l.paid) + '</td>' +
+        '<td class="right num">' + fmt(l.base) + '</td>' +
+        '<td class="right num" style="font-weight:600;color:' + C.tealDeep + '">' + fmt(l.link) + '</td>' +
+        '<td class="right num" style="font-weight:600">' + fmt(l.enov) + '</td>' +
+        '<td class="right num" style="color:' + C.muted + '">' + fmt(l.zeds) + '</td>' +
+        '<td class="right num" style="color:' + C.muted + '">' + fmt(l.credit) + '</td></tr>';
+    }).join('');
+
+    var sheet = panel('Who paid, and what landed in our bank',
+      tools('remSearch', 'tblRemit', 'Driver, link or date\u2026', null) +
+      '<div class="scroll list"><table class="data" id="tblRemit"><thead><tr>' +
+      th('In bank on') + th('Driver ID') + th('Driver') + th('Mobile') + th('Link / Ref') + th('Paid on') +
+      th('Debt paid', 1) + th('Cash landed', 1) + th('eNovate share', 1) + th('Our share', 1) + th('Credit', 1) +
+      '</tr></thead><tbody>' + rows +
+      '<tr class="tot"><td>TOTAL</td><td></td><td>' + lp.length + ' payments</td><td></td><td></td><td></td>' +
+      '<td class="right num">' + fmt(tot.base) + '</td><td class="right num">' + fmt(tot.link) + '</td>' +
+      '<td class="right num">' + fmt(tot.enov) + '</td><td class="right num">' + fmt(tot.zeds) + '</td>' +
+      '<td class="right num">' + fmt(tot.credit) + '</td></tr></tbody></table></div>' +
+      noteLine('This is the sheet to send with the transfer: every driver whose cash actually reached our account ' +
+        'between <b>' + esc(r.start) + '</b> and <b>' + esc(r.end) + '</b>. Money still in transit is deliberately ' +
+        'excluded \u2014 eNovate is only paid out of cash we are holding.'));
+
+    var per = panel('By driver', '<div class="scroll"><table class="data"><thead><tr>' +
+      th('Driver') + th('Payments', 1) + th('Debt paid', 1) + th('Cash landed', 1) + th('eNovate share', 1) +
+      '</tr></thead><tbody>' + groups.map(function (g) {
+        return '<tr><td style="font-weight:500">' + esc(g.name) + '<span class="num" style="color:' + C.muted +
+          ';font-size:10.5px;margin-left:8px">' + esc(g.id) + '</span></td>' +
+          '<td class="right num">' + g.n + '</td><td class="right num">' + fmt(g.base) + '</td>' +
+          '<td class="right num" style="font-weight:600">' + fmt(g.link) + '</td>' +
+          '<td class="right num">' + fmt(g.enov) + '</td></tr>';
+      }).join('') + '</tbody></table></div>', groups.length + ' drivers');
+
+    return head + sheet + per;
+  }
+
+  /* ---- RECONCILIATION ---- */
+  function pgRecon(d) {
+    var k = K(), m = d.model, st = settings();
+    var badChk = (d.checks || []).filter(function (c) { return !c.pass; }).length;
+    var hard = +k.badDate + +k.noRate + +k.badTrip + +k.dupLinks;
+    var soft = +k.lowFare + +k.sysGap + +k.badPhone + +k.unconfirmed;
+    var h = acc('a1', 'Reconciliation identities',
+      badChk ? badChk + ' failing' : 'All ' + (d.checks || []).length + ' close at 0.00', badChk ? 'no' : 'ok',
+      '<div class="chk">' + (d.checks || []).map(function (c) {
+        return '<div class="c"><div class="t">' + esc(c.label) + '</div><div class="num" style="font-weight:600;color:' +
+          (c.pass ? C.ok : C.bad) + '">' + fmt(c.diff) + '</div></div>';
+      }).join('') + '</div>');
+
+    h += acc('a2', 'Data quality', hard ? hard + ' to fix' : (soft ? soft + ' to look at' : 'Clean'),
+      hard ? 'no' : (soft ? 'mid' : 'ok'),
+      '<div class="scroll"><table class="data"><tbody>' +
+      [['Unreadable trip date', k.badDate, 1], ['No rate card row', k.noRate, 1],
+       ['Trip failing its own check', k.badTrip, 1], ['Duplicate link ID', k.dupLinks, 1],
+       ['Fare below the minimum', k.lowFare, 0], ['Debt differs from the system column', k.sysGap, 0],
+       ['Phone cell is not a phone', k.badPhone, 0], ['Open dispute', k.disputes, 0],
+       ['Day with no deposit saved', k.unconfirmed, 0]].map(function (r) {
+        var n = Number(r[1]) || 0;
+        return '<tr><td>' + esc(r[0]) + '</td><td class="right num" style="font-weight:600;color:' +
+          (n === 0 ? C.ok : (r[2] ? C.bad : C.warn)) + '">' + int(n) + '</td></tr>';
+      }).join('') + '</tbody></table></div>');
+
+    h += acc('a3', 'Bank variance', Number(k.variance) === 0 ? '0.00' : fmt(k.variance),
+      Number(k.variance) === 0 ? 'ok' : 'no',
+      '<div class="scroll"><table class="data"><tbody>' +
+      [['Expected from the links', fmt(k.charged)], ['In the bank', fmt(k.deposit)],
+       ['In transit \u2014 not landed yet', fmt(k.transit)], ['Days with no deposit saved', int(k.unconfirmed)],
+       ['Days held back by a variance', int(k.varianceBlocked || 0)]].map(function (r) {
+        return '<tr><td>' + esc(r[0]) + '</td><td class="right num" style="font-weight:600">' + r[1] + '</td></tr>';
+      }).join('') + '</tbody></table></div>');
+
+    h += acc('a4', 'Earned to sent', fmt(k.transferred), 'ok', (function () {
+      var rows = [['Debt earned', k.debt, C.orange, 1], ['Collected from drivers', k.matched, C.tealBright, 1],
+        ['We keep \u00b7 share', k.zedsRel, C.navy], ['We keep \u00b7 fees', k.zedsFees, C.navy],
+        ['eNovate \u00b7 share', k.enovRel, C.teal], ['eNovate \u00b7 fees', k.enovFees, C.teal],
+        ['\u2212 ACH bank charges', k.ach, C.red], ['SENT TO eNOVATE', k.transferred, C.tealDeep, 1],
+        ['Waiting on a bank deposit', k.pending, C.warn], ['Carried \u2014 minimum or non-working day', k.carried, C.warn],
+        ['Still on the drivers', Number(k.debt) - Number(k.matched), C.muted, 1]];
+      var max = 1;
+      rows.forEach(function (r) { if (Math.abs(r[1]) > max) max = Math.abs(r[1]); });
+      return rows.map(function (r) {
+        return '<div class="wf' + (r[3] ? ' key' : '') + '"><div class="lb">' + r[0] + '</div><div class="tk">' +
+          '<div style="width:' + w(r[1], max) + ';background:' + r[2] + '"></div></div><div class="vl">' + fmt(r[1]) + '</div></div>';
+      }).join('');
+    })());
+
+    h += acc('a5', 'Rate card', m ? 'From ' + m.effectiveFrom : 'Missing', m ? 'ok' : 'no',
+      m ? '<div class="rates">' + [['Commission', pct(m.commRate)], ['Platform fee', fmt(m.fixedFee)],
+        ['VAT', pct(m.vatRate)], ['eNovate of commission', pct(m.eShareComm)], ['SSG of commission', pct(m.ssgShareComm)],
+        ['eNovate of platform fee', pct(m.eShareFixed)], ['SSG of platform fee', pct(m.ssgShareFixed)],
+        ['Traffic of platform fee', pct(m.trafficShareFixed)], ['Our share of the eNovate slice', pct(m.zedsShare)]]
+        .map(function (c) {
+          return '<div class="rate"><div class="l">' + esc(c[0]) + '</div><div class="v num">' + c[1] + '</div></div>';
+        }).join('') + '</div>' : '');
+
+    if (m && m.ex) {
+      h += acc('a6', 'One trip, step by step', 'Live from the rate card', 'ok',
+        [['1', 'Rider pays', m.ex.gross], ['2', 'Meter fare \u2014 the driver keeps it', m.ex.meter],
+         ['3', 'Service commission', m.ex.comm], ['4', 'Fixed platform fee', m.ex.fixed], ['5', 'VAT', m.ex.vat],
+         ['=', 'DRIVER DEBT', m.ex.debt], ['A', 'Our share', m.ex.zeds], ['B', 'To eNovate', m.ex.enov]]
+          .map(function (s) {
+            var key = s[0] === '=' || s[0] === 'A' || s[0] === 'B';
+            return '<div class="step"><div class="k"' + (key ? ' style="background:' + C.tealDeep + ';color:#FFF"' : '') +
+              '>' + s[0] + '</div><div class="t"' + (key ? ' style="font-weight:600"' : '') + '>' + s[1] +
+              '</div><div class="v"' + (key ? ' style="color:' + C.tealDeep + '"' : '') + '>' + fmt(s[2]) + '</div></div>';
+          }).join('') +
+        '<div class="step"><div class="k">\u00b7</div><div class="t" style="color:' + C.muted +
+        '">Inside the eNovate amount: eNovate ' + fmt(m.ex.enovOwn) + ' \u00b7 SSG ' + fmt(m.ex.ssg) +
+        ' \u00b7 Traffic ' + fmt(m.ex.traffic) + ' \u2014 they distribute it onward, we never split it.</div>' +
+        '<div class="v"></div></div>');
+    }
+
+    var week = weekText(S.week);
+    var okWeek = week === 'Sun, Mon, Tue, Wed, Thu';
+    h += acc('a7', 'Working week and holidays', okWeek ? week : week + ' \u2014 check this', okWeek ? 'ok' : 'mid',
+      '<div class="rates"><div class="rate"><div class="l">Transfer days</div><div class="v num" style="font-size:14px">' +
+      esc(week) + '</div></div><div class="rate"><div class="l">Holidays typed in</div><div class="v num">' +
+      int(Object.keys(S.holidays).length) + '</div></div><div class="rate"><div class="l">Transfers sent</div>' +
+      '<div class="v num">' + int(k.transfers || 0) + '</div></div><div class="rate"><div class="l">ACH fees paid</div>' +
+      '<div class="v num">' + fmt(k.ach) + '</div></div><div class="rate"><div class="l">Expected ACH</div>' +
+      '<div class="v num">' + fmt(Number(k.transfers || 0) * achFee()) + '</div></div></div>' +
+      noteLine('ACH fees paid must always equal the fee times the number of transfers actually sent. If they differ, ' +
+        'a day fired a transfer that should never have gone out.'));
+
+    var feeBad = Number(st.linkFee) !== 1.5 || Number(st.ach) !== 50 || !st.remit;
+    h += acc('a8', 'Fees and settings', feeBad ? 'Check these' : 'As contracted', feeBad ? 'mid' : 'ok',
+      '<div class="scroll"><table class="data"><thead><tr><th>Setting</th><th class="right">Value</th>' +
+      '<th class="right">Range total</th></tr></thead><tbody>' +
+      [['Link fee added \u00b7 total', fmt(st.linkFee), '', Number(st.linkFee) === 1.5],
+       ['\u00b7 our half', fmt(st.zedsLinkFee), fmt(k.zedsFees), true],
+       ['\u00b7 eNovate half', fmt(st.enovLinkFee), fmt(k.enovFees), !!st.remit],
+       ['ACH per transfer', fmt(st.ach), fmt(k.ach), Number(st.ach) === 50],
+       ['Minimum transfer (net)', fmt(st.minTransfer), '', Number(st.minTransfer) > 0],
+       ['Deposit lag', 'T+' + int(st.lag), '', Number(st.lag) >= 0 && Number(st.lag) <= 3],
+       ['Block threshold', fmt(st.block), '', Number(st.block) >= 10],
+       ['Only send against a saved deposit', st.gate ? 'Yes' : 'No', '', !!st.gate],
+       ['Hold disputed trips', st.holdDisputed ? 'Yes' : 'No', fmt(k.held), !!st.holdDisputed]]
+        .map(function (r) {
+          return '<tr><td' + (String(r[0]).charAt(0) === '\u00b7' ? ' style="color:' + C.muted + ';padding-left:15px"' :
+            ' style="font-weight:500"') + '>' + esc(r[0]) + '</td><td class="right num" style="font-weight:600;color:' +
+            (r[3] ? C.ink : C.bad) + '">' + r[1] + '</td><td class="right num" style="color:' + C.muted + '">' +
+            (r[2] || '') + '</td></tr>';
+        }).join('') + '</tbody></table></div>');
+    return h;
+  }
+
+  /* ------------------------------------------------------------------ bits */
+  function th(label, right) {
+    return '<th class="s' + (right ? ' right' : '') + '" data-sort="1">' + label + '</th>';
+  }
+  function tools(inputId, tableId, placeholder, chips) {
+    var c = (chips || []).map(function (x, i) {
+      return '<button class="chip' + (i === 0 ? ' on' : '') + '" data-chip="' + esc(x[1]) + '" data-table="' +
+        tableId + '">' + esc(x[0]) + '</button>';
+    }).join('');
+    return '<div class="tools"><div class="search">' + ic('find') + '<input id="' + inputId + '" type="search" ' +
+      'placeholder="' + esc(placeholder) + '" data-table="' + tableId + '"></div>' + c +
+      '<span class="hits" id="hits-' + tableId + '"></span></div>';
+  }
+  function acc(id, title, tag, tagCls, inner) {
+    return '<details class="acc" id="' + id + '"' + (S.open[id] ? ' open' : '') + '><summary>' + esc(title) +
+      '<span class="tag ' + tagCls + '">' + esc(tag) + '</span><span class="caret">' + ic('down') +
+      '</span></summary><div class="in">' + inner + '</div></details>';
+  }
+  function legend(defs) {
+    return '<p class="lg">' + defs.map(function (d) {
+      return '<b><i style="background:' + d[2] + '"></i>' + esc(d[1]) + '</b>';
+    }).join('') + '</p>';
+  }
+  function niceMax(v) {
+    if (!(v > 0)) return 1;
+    var p = Math.pow(10, Math.floor(Math.log10(v))), n = v / p;
+    var m = n <= 1 ? 1 : (n <= 2 ? 2 : (n <= 2.5 ? 2.5 : (n <= 5 ? 5 : 10)));
+    return m * p;
+  }
+  function barChart(rows, defs) {
+    var W = 760, H = 232, L = 56, R = 12, T = 12, B = 32;
+    var iw = W - L - R, ih = H - T - B, max = 0;
+    rows.forEach(function (r) { defs.forEach(function (d) { max = Math.max(max, Math.abs(Number(r[d[0]]) || 0)); }); });
+    var top = niceMax(max);
+    var lab = top >= 100000 ? function (v) { return Math.round(v / 1000).toLocaleString('en-US') + 'k'; }
+      : function (v) { return Math.round(v).toLocaleString('en-US'); };
+    var gw = iw / rows.length, bw = Math.max(5, Math.min(16, (gw - 8) / defs.length));
+    var span = bw * defs.length + (defs.length - 1) * 2, grid = '';
+    [0, .25, .5, .75, 1].forEach(function (f) {
+      var yy = T + ih - f * ih;
+      grid += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + yy.toFixed(1) + '" y2="' + yy.toFixed(1) +
+        '" stroke="' + (f === 0 ? C.line : C.grid) + '" stroke-width="1"/><text x="' + (L - 9) + '" y="' +
+        (yy + 3.4).toFixed(1) + '" text-anchor="end" font-size="9.5" fill="' + C.muted + '" font-family="IBM Plex Mono,monospace">' +
+        lab(top * f) + '</text>';
+    });
+    var bars = rows.map(function (r, i) {
+      var x0 = L + i * gw + gw / 2 - span / 2;
+      return defs.map(function (d, j) {
+        var v = Number(r[d[0]]) || 0, hh = Math.max((Math.abs(v) / top) * ih, v > 0 ? 1.5 : 0);
+        return '<rect x="' + (x0 + j * (bw + 2)).toFixed(1) + '" y="' + (T + ih - hh).toFixed(1) + '" width="' +
+          bw.toFixed(1) + '" height="' + hh.toFixed(1) + '" rx="2.5" fill="' + d[2] + '"><title>' + esc(r.date) +
+          ' \u00b7 ' + esc(d[1]) + ' ' + fmt(v) + '</title></rect>';
+      }).join('');
+    }).join('');
+    var every = rows.length > 10 ? Math.ceil(rows.length / 9) : 1;
+    var xlab = rows.map(function (r, i) {
+      return i % every ? '' : '<text x="' + (L + i * gw + gw / 2).toFixed(1) + '" y="' + (T + ih + 17) +
+        '" text-anchor="middle" font-size="9.5" fill="' + C.muted + '" font-family="IBM Plex Mono,monospace">' +
+        esc(dm(r.date)) + '</text>';
+    }).join('');
+    return '<div class="cw"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img">' + grid + bars + xlab + '</svg></div>';
+  }
+
+  /* ------------------------------------------------------------------ render */
+  function render() {
+    var d = S.data;
+    if (!d) return;
+    var h = '';
+    if (d.rateWarn) h += '<div class="alert">' + esc(d.rateWarn) + '</div>';
+    h += wrap('today', pgToday(d));
+    h += wrap('pool', pgPool(d));
+    h += wrap('history', pgHistory(d));
+    h += wrap('drivers', pgDrivers(d));
+    h += wrap('links', pgLinks(d));
+    h += wrap('remit', pgRemit(d));
+    h += wrap('recon', pgRecon(d));
+    root.querySelector('#content').innerHTML = h;
+    root.querySelector('#rail').innerHTML = drawRail();
+    drawHeader();
+    ['tblDrivers', 'tblLinks', 'tblRemit'].forEach(applyFilter);
+  }
+  function wrap(k, inner) {
+    return '<section class="page' + (k === S.page ? ' on' : '') + '" id="page-' + k + '">' + inner + '</section>';
+  }
+  function go(k) {
+    if (!PAGEMAP[k]) return;
+    S.page = k; S.pop = false;
+    PAGES.forEach(function (p) {
+      var a = root.querySelector('[data-go="' + p.k + '"]'), s = root.querySelector('#page-' + p.k);
+      if (a && a.tagName === 'A') a.className = (p.k === k ? 'on' : '');
+      if (s) s.className = 'page' + (p.k === k ? ' on' : '');
+    });
+    drawHeader();
+    persist();
+    window.scrollTo(0, 0);
+    load(true);
+  }
+
+  /* ------------------------------------------------------------------ tables */
+  function applyFilter(tableId) {
+    var t = root.querySelector('#' + tableId);
+    if (!t || !t.tBodies[0]) return;
+    var qq = t.getAttribute('data-q') || '', chip = t.getAttribute('data-chip') || 'all';
+    var terms = qq.split(/\s+/).filter(function (x) { return x; });
+    var rows = t.tBodies[0].rows, shown = 0, total = 0;
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      if (r.className.indexOf('tot') >= 0 || r.className.indexOf('sep') >= 0) continue;
+      total++;
+      var key = (r.getAttribute('data-k') || r.textContent).toLowerCase(), ok = true;
+      for (var j = 0; j < terms.length; j++) if (key.indexOf(terms[j]) < 0) { ok = false; break; }
+      if (ok && chip !== 'all') ok = (r.getAttribute('data-s') || '') === chip;
+      r.style.display = ok ? '' : 'none';
+      if (ok) shown++;
+    }
+    var hh = root.querySelector('#hits-' + tableId);
+    if (hh) hh.textContent = shown === total ? total + ' rows' : shown + ' of ' + total + ' rows';
+  }
+  function sortTable(th2) {
+    var t = th2;
+    while (t && t.tagName !== 'TABLE') t = t.parentNode;
+    if (!t) return;
+    var idx = th2.cellIndex, dir = th2.classList.contains('asc') ? -1 : 1, hs = th2.parentNode.cells, i;
+    for (i = 0; i < hs.length; i++) { hs[i].classList.remove('asc'); hs[i].classList.remove('desc'); }
+    th2.classList.add(dir === 1 ? 'asc' : 'desc');
+    var body = t.tBodies[0], rows = [], keep = [];
+    for (i = 0; i < body.rows.length; i++) {
+      var row = body.rows[i];
+      if (row.className.indexOf('tot') >= 0 || row.className.indexOf('sep') >= 0) keep.push(row); else rows.push(row);
+    }
+    var val = function (row) {
+      var txt = (row.cells[idx] ? row.cells[idx].textContent : '').replace(/,/g, '').trim();
+      var n = parseFloat(txt);
+      return (txt !== '' && !isNaN(n) && /^[-+\u2212]?[0-9.]+%?$/.test(txt.replace('\u2212', '-'))) ? n : txt.toLowerCase();
+    };
+    rows.sort(function (a, b) {
+      var x = val(a), y = val(b);
+      if (typeof x === 'number' && typeof y === 'number') return (x - y) * dir;
+      return String(x).localeCompare(String(y)) * dir;
+    });
+    rows.forEach(function (r) { body.appendChild(r); });
+    keep.forEach(function (r) { body.appendChild(r); });
+  }
+
+  /* ------------------------------------------------------------------ export */
+  /* Every page exports ITS OWN workbook. One .xlsx, one or more sheets, money already
+     formatted to two decimals — no CSV cleanup, no re-typing in Excel. */
+  function n2(v) { return Math.round((Number(v) || 0) * 100) / 100; }
+  function T(s) { return { v: s, t: 'title' }; }
+  function H(a) { return a.map(function (s) { return { v: s, t: 'head' }; }); }
+  function B(v) { return { v: v, b: true }; }
+  function txt(v) { return { v: v === null || v === undefined ? '' : String(v), m: false }; }
+
+  function meta(extra) {
+    var r = activeRange(), d = S.data || {};
+    var out = [
+      [T('Taxi Sharm \u2014 ' + PAGEMAP[S.page].t)],
+      [txt('Range'), txt((r.start || '\u2014') + '  to  ' + (r.end || '\u2014'))],
+      [txt('Generated'), txt(new Date().toISOString().slice(0, 16).replace('T', ' '))],
+      [txt('Engine'), txt(d.version || ''), txt('Working week'), txt(weekText(S.week))]
+    ];
+    (extra || []).forEach(function (x) { out.push(x); });
+    out.push([]);
+    return out;
+  }
+
+  function exportPage() {
+    var d = S.data;
+    if (!d) { toast('Nothing to export yet.', 'bad'); return; }
+    if (!window.TaxiXlsx) { toast('The spreadsheet writer did not load.', 'bad'); return; }
+    var r = activeRange(), k = d.kpi || {}, sheets = [];
+
+    if (S.page === 'today') {
+      var t = d.focus || {};
+      var rows = meta([[txt('Day'), txt(t.date + '  (' + dow(t.date) + ')')],
+        [txt('Working day'), txt(isWorkDay(t.date) ? 'Yes \u2014 a transfer can go out' : 'No \u2014 carried to ' + nextWorkDay(t.date))]]);
+      rows.push(H(['Line', 'Amount (EGP)']));
+      [['Trips', t.trips], ['Rider fares', t.gross], ['Driver debt earned', t.debt], [null, null],
+       ['Bank deposit received', t.deposit], ['Expected from the links', t.expected], ['Variance', t.variance],
+       [null, null], ['Collected from drivers', t.matched], ['Driver credit held', t.credit],
+       ['We keep', t.kept], ['eNovate share', t.enov], ['eNovate link fee', t.fees],
+       ['ACH bank charge', -Math.abs(Number(t.ach) || 0)], ['NET TRANSFER TO eNOVATE', t.net]]
+        .forEach(function (x) {
+          if (x[0] === null) { rows.push([]); return; }
+          var key = x[0] === 'NET TRANSFER TO eNOVATE';
+          rows.push([key ? B(x[0]) : txt(x[0]), key ? B(n2(x[1])) : n2(x[1])]);
+        });
+      rows.push([]);
+      rows.push([txt('Bank reference'), txt(t.ref || '')]);
+      rows.push([txt('Logged at'), txt(t.loggedAt || '')]);
+      sheets.push({ name: 'Transfer voucher', cols: [40, 18], rows: rows });
+
+    } else if (S.page === 'pool') {
+      var pl = poolTotals(), nd = nextTransferDay(), carry = carriedFrom();
+      var s1 = meta([[txt('Next transfer day'), txt(nd + '  (' + dow(nd) + ')')],
+        [txt('Carried non-working days'), txt(carry.length ? carry.map(function (x) { return dow(x) + ' ' + x; }).join(', ') : 'none')]]);
+      s1.push(H(['Pool', 'Amount (EGP)']));
+      [['Collected from drivers, not yet sent to eNovate', pl.total, 1],
+       ['Confirmed in the bank \u2014 ready to send', pl.ready, 0],
+       ['Waiting on a bank deposit', pl.pending, 0],
+       ['Held back by a bank variance', pl.blocked, 0],
+       ['ACH bank charge on the next transfer', -Math.abs(achFee()), 0],
+       ['Leaves the account on the next transfer', Math.max(0, pl.ready - achFee()), 1]]
+        .forEach(function (x) { s1.push([x[2] ? B(x[0]) : txt(x[0]), x[2] ? B(n2(x[1])) : n2(x[1])]); });
+      sheets.push({ name: 'Pool summary', cols: [48, 18], rows: s1 });
+
+      var s2 = [H(['Day', 'Weekday', 'Working day', 'Bank deposit', 'Expected from links', 'Variance',
+        'eNovate held', 'Why it is still held'])];
+      poolRows().forEach(function (x) {
+        var work = isWorkDay(x.date);
+        var why = !x.confirmed ? 'No bank deposit saved yet'
+          : (Number(x.variance) !== 0 ? 'Deposit off by ' + n2(x.variance).toFixed(2)
+            : (!work ? 'Non-working day \u2014 leaves on ' + nextWorkDay(x.date) : 'Below the minimum after the bank charge'));
+        s2.push([txt(x.date), txt(dow(x.date)), txt(work ? 'Yes' : 'No'), n2(x.deposit), n2(x.expected),
+          n2(x.variance), n2(Number(x.enov) + Number(x.fees)), txt(why)]);
+      });
+      sheets.push({ name: 'Days holding money', cols: [13, 10, 12, 15, 18, 12, 14, 44], rows: s2, freeze: 1 });
+
+    } else if (S.page === 'history') {
+      var h = meta();
+      h.push(H(['Date', 'Weekday', 'Working day', 'Links', 'In the bank', 'Expected', 'Variance',
+        'Collected', 'Our share', 'Our fee', 'WE KEEP', 'eNovate share', 'eNovate fee', 'ACH',
+        'SENT TO eNOVATE', 'Driver credit', 'Not sent yet', 'State', 'Bank reference']));
+      var tot = { dep: 0, ex: 0, m: 0, kp: 0, e: 0, f: 0, a: 0, n: 0 };
+      d.days.forEach(function (x) {
+        tot.dep += +x.deposit; tot.ex += +x.expected; tot.m += +x.matched; tot.kp += +x.kept;
+        tot.e += +x.enov; tot.f += +x.fees; tot.a += +x.ach; tot.n += +x.net;
+        h.push([txt(x.date), txt(dow(x.date)), txt(isWorkDay(x.date) ? 'Yes' : 'No'),
+          { v: Number(x.links) || 0, m: false }, n2(x.deposit), n2(x.expected), n2(x.variance), n2(x.matched),
+          n2(x.zeds), n2(x.zedsFee), n2(x.kept), n2(x.enov), n2(x.fees), n2(x.ach), n2(x.net),
+          n2(x.credit), n2(Number(x.carry) + Number(x.pending)), txt(x.state), txt(x.ref || '')]);
+      });
+      h.push([B('TOTAL'), '', '', '', B(n2(tot.dep)), B(n2(tot.ex)), B(n2(tot.dep - tot.ex)), B(n2(tot.m)),
+        '', '', B(n2(tot.kp)), B(n2(tot.e)), B(n2(tot.f)), B(n2(tot.a)), B(n2(tot.n))]);
+      sheets.push({ name: 'Settlement history', cols: [13, 9, 11, 7, 14, 14, 11, 13, 11, 10, 13, 14, 13, 10, 17, 13, 13, 40, 22], rows: h, freeze: 6 });
+
+    } else if (S.page === 'drivers') {
+      var dr = meta();
+      dr.push(H(['Driver ID', 'Driver name', 'Mobile', 'Trips', 'Debt earned', 'Collected',
+        'Outstanding', 'Credit held', 'Held for dispute', 'Status']));
+      var td = { t: 0, e: 0, c: 0, o: 0, cr: 0, hd: 0 };
+      d.drivers.forEach(function (x) {
+        td.t += +x.trips; td.e += +x.earned; td.c += +x.collected; td.o += +x.outstanding;
+        td.cr += +x.credit; td.hd += +x.held;
+        dr.push([txt(x.id), txt(x.name), txt(x.phone || ''), { v: Number(x.trips) || 0, m: false },
+          n2(x.earned), n2(x.collected), n2(x.outstanding), n2(x.credit), n2(x.held), txt(x.status)]);
+      });
+      dr.push([B('TOTAL'), '', '', B(td.t), B(n2(td.e)), B(n2(td.c)), B(n2(td.o)), B(n2(td.cr)), B(n2(td.hd))]);
+      sheets.push({ name: 'Drivers', cols: [13, 26, 16, 8, 14, 14, 14, 13, 16, 22], rows: dr, freeze: 6 });
+
+    } else if (S.page === 'links') {
+      var lk = meta();
+      lk.push(H(['Link ID', 'Driver ID', 'Driver name', 'Debt requested', 'LINK AMOUNT', 'Date paid',
+        'In bank on', 'Our side', 'eNovate side', 'Driver credit', 'State']));
+      d.payments.forEach(function (x) {
+        lk.push([txt(x.id), txt(x.driver), txt(x.name || ''), n2(x.base), n2(x.link), txt(x.paid),
+          txt(x.deposit), n2(x.zeds), n2(x.enov), n2(x.credit), txt(x.landed ? 'In the bank' : 'In transit')]);
+      });
+      sheets.push({ name: 'Payment links', cols: [16, 13, 26, 15, 15, 13, 13, 13, 14, 13, 15], rows: lk, freeze: 6 });
+
+    } else if (S.page === 'remit') {
+      var lp = landedPayments(), idx = driverIndex();
+      var tt = { l: 0, e: 0, z: 0 };
+      var s = meta([[txt('Sheet'), txt('Drivers whose cash is confirmed in our bank account')],
+        [txt('Excluded'), txt('Payments still in transit \u2014 eNovate is only paid out of cash we hold')]]);
+      s.push(H(['Driver ID', 'Driver name', 'Mobile', 'Link ID / Paymob reference', 'Date paid',
+        'Link amount (EGP)', 'eNovate share (EGP)', 'Our share (EGP)']));
+      lp.forEach(function (x) {
+        var dv = idx[x.driver] || {};
+        tt.l += +x.link; tt.e += +x.enov; tt.z += +x.zeds;
+        s.push([txt(x.driver), txt(x.name || ''), txt(dv.phone || ''),
+          txt(x.id + (x.ref ? ' / ' + x.ref : '')), txt(x.paid), n2(x.link), n2(x.enov), n2(x.zeds)]);
+      });
+      s.push([B('TOTAL'), B(lp.length + ' payments'), '', '', '', B(n2(tt.l)), B(n2(tt.e)), B(n2(tt.z))]);
+      s.push([]);
+      s.push([txt('Transferred to eNovate in this range'), '', '', '', '', '', n2(k.transferred)]);
+      s.push([txt('ACH bank charges deducted'), '', '', '', '', '', n2(k.ach)]);
+      s.push([txt('Still held \u2014 waiting on a deposit or a working day'), '', '', '', '', '',
+        n2(Number(k.pending) + Number(k.carried))]);
+      sheets.push({ name: 'eNovate remittance', cols: [13, 26, 16, 30, 13, 18, 19, 17], rows: s, freeze: 8 });
+
+      var g = {};
+      lp.forEach(function (x) {
+        var o = g[x.driver] || (g[x.driver] = { name: x.name || x.driver, n: 0, l: 0, e: 0 });
+        o.n++; o.l += +x.link; o.e += +x.enov;
+      });
+      var s2b = [H(['Driver ID', 'Driver name', 'Payments', 'Cash landed (EGP)', 'eNovate share (EGP)'])];
+      Object.keys(g).sort(function (a, b) { return g[b].l - g[a].l; }).forEach(function (id) {
+        s2b.push([txt(id), txt(g[id].name), { v: g[id].n, m: false }, n2(g[id].l), n2(g[id].e)]);
+      });
+      sheets.push({ name: 'By driver', cols: [13, 26, 11, 18, 19], rows: s2b, freeze: 1 });
+
+    } else {
+      var rc = meta();
+      rc.push(H(['Identity \u2014 every difference must be 0.00', 'Left', 'Right', 'Difference', 'Result']));
+      (d.checks || []).forEach(function (c) {
+        rc.push([txt(c.label), n2(c.left), n2(c.right), n2(c.diff), txt(c.pass ? 'OK' : 'FAIL')]);
+      });
+      sheets.push({ name: 'Identities', cols: [62, 15, 15, 14, 10], rows: rc, freeze: 6 });
+      var kp = [H(['KPI', 'Value'])];
+      [['Trips', k.trips], ['Rider fares', k.gross], ['Driver debt earned', k.debt],
+       ['Collected from drivers', k.matched], ['Driver credit held', k.credit],
+       ['Outstanding on drivers', k.outstanding], ['We kept', k.zedsCash],
+       ['eNovate entitlement from landed cash', k.enovEnt], ['Sent to eNovate', k.transferred],
+       ['ACH fees paid', k.ach], ['Transfers actually sent', k.transfers],
+       ['Carried forward', k.carried], ['Waiting on a bank deposit', k.pending],
+       ['Bank variance (must be 0.00)', k.variance], ['Unreadable trip dates', k.badDate],
+       ['Trips with no rate card row', k.noRate], ['Trips failing their own check', k.badTrip],
+       ['Duplicate link IDs', k.dupLinks], ['Open disputes', k.disputes]]
+        .forEach(function (x) { kp.push([txt(x[0]), n2(x[1])]); });
+      sheets.push({ name: 'KPIs', cols: [44, 16], rows: kp, freeze: 1 });
+    }
+
+    var name = 'taxi_sharm_' + S.page + '_' + (r.start || 'all') + '_' + (r.end || 'all') + '.xlsx';
+    try {
+      window.TaxiXlsx.save(name, sheets);
+      toast('Exported ' + name, 'good');
+    } catch (err) {
+      toast('Export failed: ' + (err && err.message ? err.message : err), 'bad');
+    }
+  }
+
+  /* ------------------------------------------------------------------ events */
+  function bind() {
+    root.addEventListener('click', function (e) {
+      var el = e.target;
+      var goEl = el.closest ? el.closest('[data-go]') : null;
+      var actEl = el.closest ? el.closest('[data-act]') : null;
+      var chipEl = el.closest ? el.closest('[data-chip]') : null;
+      var presetEl = el.closest ? el.closest('[data-preset]') : null;
+      var thEl = el.closest ? el.closest('th[data-sort]') : null;
+
+      if (presetEl) {
+        var cfg = S.rng[S.page];
+        if (cfg) { cfg.preset = presetEl.getAttribute('data-preset'); cfg.start = ''; cfg.end = ''; }
+        S.pop = false; persist(); drawHeader(); load();
+        return;
+      }
+      if (chipEl) {
+        var tid = chipEl.getAttribute('data-table');
+        var box = chipEl.parentNode.querySelectorAll('.chip');
+        for (var i = 0; i < box.length; i++) box[i].classList.remove('on');
+        chipEl.classList.add('on');
+        var tb = root.querySelector('#' + tid);
+        if (tb) tb.setAttribute('data-chip', chipEl.getAttribute('data-chip'));
+        applyFilter(tid);
+        return;
+      }
+      if (thEl) { sortTable(thEl); return; }
+      if (actEl) {
+        var a = actEl.getAttribute('data-act');
+        if (a === 'rail') { S.tight = !S.tight; root.classList.toggle('tight', S.tight); persist(); return; }
+        if (a === 'home') { S.focus = ''; S.driver = 'all'; go('today'); return; }
+        if (a === 'pop') { S.pop = !S.pop; drawHeader(); return; }
+        if (a === 'export') { exportPage(); return; }
+        if (a === 'copy') {
+          var v = actEl.getAttribute('data-v');
+          var ta = document.createElement('textarea');
+          ta.value = v; document.body.appendChild(ta); ta.select();
+          try { document.execCommand('copy'); } catch (err) {}
+          document.body.removeChild(ta);
+          toast('Copied ' + v, 'good');
+          return;
+        }
+        if (a === 'useexp') { var f = q('depAmt'); if (f) { f.value = actEl.getAttribute('data-v'); f.focus(); } return; }
+        if (a === 'savedep') {
+          var amt = q('depAmt') ? q('depAmt').value : '';
+          act('apiSetDeposit', [actEl.getAttribute('data-day'), amt, opts()]);
+          return;
+        }
+        if (a === 'logtr') {
+          var ref = q('trRef') ? q('trRef').value.trim() : '';
+          if (!ref) { toast('Type the bank reference first.', 'bad'); return; }
+          var net = Number(actEl.getAttribute('data-net')) || 0;
+          var sent = q('trAmt') ? Number(q('trAmt').value) : net;
+          var note = ref;
+          if (Math.abs(sent - net) > 0.005) {
+            note = ref + ' · sent ' + sent.toFixed(2) + ' (engine ' + net.toFixed(2) + ')';
+            toast('Logged ' + sent.toFixed(2) + ', but the engine derived ' + net.toFixed(2) +
+              '. The difference stays in the pool and goes out with the next transfer — nothing is lost.', 'bad');
+          }
+          act('apiLogTransfer', [actEl.getAttribute('data-day'), note, opts()]);
+          return;
+        }
+        if (a === 'gotoday') { S.focus = actEl.getAttribute('data-day'); S.rng.today.preset = 'day'; go('today'); return; }
+        if (a === 'dayprev' || a === 'daynext') {
+          var cur = S.focus || (S.data.focus && S.data.focus.date) || iso(new Date());
+          S.focus = addD(cur, a === 'dayprev' ? -1 : 1);
+          drawHeader(); load();
+          return;
+        }
+        if (a === 'dayreset') { S.focus = ''; drawHeader(); load(); return; }
+        if (a === 'driver') { S.driver = actEl.getAttribute('data-v'); go('links'); return; }
+        if (a === 'cleardriver') { S.driver = 'all'; drawHeader(); load(); return; }
+      }
+      if (goEl) { go(goEl.getAttribute('data-go')); return; }
+      if (S.pop && !(el.closest && el.closest('.rangebox'))) { S.pop = false; drawHeader(); }
+    });
+    root.addEventListener('input', function (e) {
+      var t = e.target;
+      if (t.getAttribute && t.getAttribute('data-table')) {
+        var tb = root.querySelector('#' + t.getAttribute('data-table'));
+        if (tb) tb.setAttribute('data-q', (t.value || '').toLowerCase().trim());
+        applyFilter(t.getAttribute('data-table'));
+      }
+    });
+    root.addEventListener('change', function (e) {
+      var t = e.target;
+      if (t.getAttribute && t.getAttribute('data-date')) {
+        var cfg = S.rng[S.page];
+        if (!cfg) return;
+        var r = activeRange();
+        cfg.start = t.getAttribute('data-date') === 'start' ? t.value : r.start;
+        cfg.end = t.getAttribute('data-date') === 'end' ? t.value : r.end;
+        cfg.preset = 'custom';
+        persist(); drawHeader(); load();
+      }
+    });
+    root.addEventListener('toggle', function (e) {
+      if (e.target && e.target.className === 'acc' && e.target.id) S.open[e.target.id] = e.target.open;
+    }, true);
+    document.addEventListener('keydown', function (e) {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      var a = document.activeElement;
+      if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return;
+      var n = parseInt(e.key, 10);
+      if (n >= 1 && n <= PAGES.length) { go(PAGES[n - 1].k); e.preventDefault(); }
+      else if (e.key === 'e') exportPage();
+      else if (e.key === 'r') load();
+    });
+    setInterval(function () {
+      if (document.hidden || S.busy || S.pop) return;
+      var a = document.activeElement;
+      if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return;
+      load(true);
+    }, SYNC_MS);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) load(true); });
+  }
+
+  /* ------------------------------------------------------------------ mount */
+  function boot(el) {
+    root = el;
+    root.className = 'tp' + (S.tight ? ' tight' : '');
+    root.innerHTML =
+      '<div class="shell"><div id="rail" style="display:contents"></div><main>' +
+      '<div class="weave"><i style="background:#C40202"></i><i style="background:#EB9F0B"></i>' +
+      '<i style="background:#F2C230"></i><i style="background:#35939A"></i><i style="background:#182643"></i>' +
+      '<i style="background:#1F6E74"></i></div>' +
+      '<header id="hdr"></header><div class="body"><div id="content"><div class="loading">Loading\u2026</div></div></div>' +
+      '</main></div><div class="toast" id="toast"></div>';
+    root.querySelector('#rail').innerHTML = drawRail();
+    drawHeader();
+    bind();
+    load();
+  }
+
+  if (!document.getElementById('taxi-portal-css')) {
+    var s = document.createElement('style');
+    s.id = 'taxi-portal-css';
+    s.textContent = CSS;
+    document.head.appendChild(s);
+  }
+  if (typeof customElements !== 'undefined' && !customElements.get('taxi-portal')) {
+    customElements.define('taxi-portal', class extends HTMLElement {
+      connectedCallback() { if (!this._up) { this._up = 1; boot(this); } }
+    });
+  }
+})();
+</script>
+</body>
+</html>
