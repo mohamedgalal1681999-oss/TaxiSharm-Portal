@@ -56,8 +56,2423 @@ window.TAXI_CFG = {
 };
 </script>
 
-<script src="taxi-xlsx.js"></script>
-<script src="taxi-portal.js"></script>
+<script>
+/* =====================================================================================
+ * TAXI SHARM — MINIMAL XLSX WRITER
+ * No library, no CDN, no server round trip: builds a real .xlsx (a stored-entry ZIP of
+ * SpreadsheetML) in the browser.
+ *
+ *   TaxiXlsx.save('name.xlsx', [
+ *     { name:'Sheet 1', cols:[24,14], rows:[ ['Header','A'], ['Row', {v:3, b:true}] ] }
+ *   ]);
+ *
+ * A cell is a string, a number, or { v:value, b:bold, m:money, t:'title'|'head' }.
+ * Numbers carry the 2-decimal money format unless m:false is passed.
+ * ===================================================================================== */
+(function () {
+  'use strict';
+
+  var enc = new TextEncoder();
+  function bytes(s) { return enc.encode(s); }
+
+  /* The XML declaration is assembled at runtime. Apps Script's HTML templating reads an
+     angle-bracket-question-mark pair as a SCRIPTLET, so a literal declaration anywhere in
+     a file it serves is parsed as JavaScript and throws. Splitting the two characters
+     means that sequence never appears in the source while the string produced is
+     byte-identical. Never write that sequence literally in this file — not even inside a
+     comment, because the template engine scans the raw text and does not know what a
+     JavaScript comment is. */
+  var XMLHEAD = '<' + '?xml version="1.0" encoding="UTF-8" standalone="yes"?' + '>';
+
+  var TBL = (function () {
+    var t = new Uint32Array(256), c, n, k;
+    for (n = 0; n < 256; n++) {
+      c = n;
+      for (k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      t[n] = c >>> 0;
+    }
+    return t;
+  })();
+  function crc32(buf) {
+    var c = 0xFFFFFFFF;
+    for (var i = 0; i < buf.length; i++) c = TBL[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  function zip(files) {
+    var parts = [], central = [], offset = 0;
+    function u16(n) { return [n & 0xFF, (n >>> 8) & 0xFF]; }
+    function u32(n) { return [n & 0xFF, (n >>> 8) & 0xFF, (n >>> 16) & 0xFF, (n >>> 24) & 0xFF]; }
+    files.forEach(function (f) {
+      var name = bytes(f.name), data = bytes(f.data), crc = crc32(data);
+      var local = [].concat([0x50, 0x4B, 0x03, 0x04], u16(20), u16(0x0800), u16(0), u16(0),
+        u16(0), u32(crc), u32(data.length), u32(data.length), u16(name.length), u16(0));
+      parts.push(new Uint8Array(local), name, data);
+      central.push({ name: name, crc: crc, len: data.length, off: offset });
+      offset += local.length + name.length + data.length;
+    });
+    var cd = [], cdLen = 0;
+    central.forEach(function (c) {
+      var head = [].concat([0x50, 0x4B, 0x01, 0x02], u16(20), u16(20), u16(0x0800), u16(0),
+        u16(0), u16(0), u32(c.crc), u32(c.len), u32(c.len), u16(c.name.length), u16(0),
+        u16(0), u16(0), u16(0), u32(0), u32(c.off));
+      cd.push(new Uint8Array(head), c.name);
+      cdLen += head.length + c.name.length;
+    });
+    var end = new Uint8Array([].concat([0x50, 0x4B, 0x05, 0x06], u16(0), u16(0),
+      u16(central.length), u16(central.length), u32(cdLen), u32(offset), u16(0)));
+    return new Blob(parts.concat(cd, [end]),
+      { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  }
+
+  function x(s) {
+    return String(s === null || s === undefined ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+  }
+  function col(n) {
+    var s = '';
+    while (n > 0) { var r = (n - 1) % 26; s = String.fromCharCode(65 + r) + s; n = (n - r - 1) / 26; }
+    return s;
+  }
+
+  /* style ids: 0 text · 1 bold text · 2 money · 3 bold money · 4 title · 5 header */
+  var STYLES = XMLHEAD +
+    '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    '<numFmts count="1"><numFmt numFmtId="164" formatCode="#,##0.00"/></numFmts>' +
+    '<fonts count="4">' +
+    '<font><sz val="11"/><name val="Calibri"/></font>' +
+    '<font><b/><sz val="11"/><name val="Calibri"/></font>' +
+    '<font><b/><sz val="14"/><color rgb="FF12474C"/><name val="Calibri"/></font>' +
+    '<font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts>' +
+    '<fills count="3"><fill><patternFill patternType="none"/></fill>' +
+    '<fill><patternFill patternType="gray125"/></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FF12474C"/>' +
+    '<bgColor indexed="64"/></patternFill></fill></fills>' +
+    '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>' +
+    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+    '<cellXfs count="6">' +
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+    '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0"/>' +
+    '<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>' +
+    '<xf numFmtId="164" fontId="1" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>' +
+    '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0"/>' +
+    '<xf numFmtId="0" fontId="3" fillId="2" borderId="0" xfId="0" applyFill="1"/>' +
+    '</cellXfs><cellStyles count="1">' +
+    '<cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+
+  function cellXml(ref, cell) {
+    if (cell === null || cell === undefined || cell === '') return '';
+    var v = cell, bold = false, money = null, kind = '';
+    if (typeof cell === 'object') {
+      v = cell.v; bold = !!cell.b; money = cell.m; kind = cell.t || '';
+    }
+    if (v === null || v === undefined || v === '') return '';
+    var isNum = typeof v === 'number' && isFinite(v);
+    var s;
+    if (kind === 'title') s = 4;
+    else if (kind === 'head') s = 5;
+    else if (isNum && money !== false) s = bold ? 3 : 2;
+    else s = bold ? 1 : 0;
+    if (isNum) return '<c r="' + ref + '" s="' + s + '"><v>' + v + '</v></c>';
+    return '<c r="' + ref + '" s="' + s + '" t="inlineStr"><is>' +
+      '<t xml:space="preserve">' + x(v) + '</t></is></c>';
+  }
+
+  function sheetXml(sh) {
+    var cols = '';
+    if (sh.cols && sh.cols.length) {
+      cols = '<cols>' + sh.cols.map(function (wd, i) {
+        return '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + (wd || 14) +
+          '" customWidth="1"/>';
+      }).join('') + '</cols>';
+    }
+    var rows = (sh.rows || []).map(function (r, i) {
+      var cells = (r || []).map(function (c, j) {
+        return cellXml(col(j + 1) + (i + 1), c);
+      }).join('');
+      return '<row r="' + (i + 1) + '">' + cells + '</row>';
+    }).join('');
+    return XMLHEAD +
+      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+      '<sheetViews><sheetView workbookViewId="0"' +
+      (sh.freeze ? '><pane ySplit="' + sh.freeze + '" topLeftCell="A' + (sh.freeze + 1) +
+        '" activePane="bottomLeft" state="frozen"/></sheetView>' : '/>') +
+      '</sheetViews>' + cols + '<sheetData>' + rows + '</sheetData></worksheet>';
+  }
+
+  function build(sheets) {
+    var names = sheets.map(function (s, i) {
+      return String(s.name || ('Sheet' + (i + 1))).replace(/[\\\/\?\*\[\]:]/g, ' ').slice(0, 31);
+    });
+    var files = [
+      { name: '[Content_Types].xml', data: XMLHEAD +
+        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+        '<Default Extension="xml" ContentType="application/xml"/>' +
+        '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+        sheets.map(function (s, i) {
+          return '<Override PartName="/xl/worksheets/sheet' + (i + 1) +
+            '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>';
+        }).join('') +
+        '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>' },
+      { name: '_rels/.rels', data: XMLHEAD +
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' },
+      { name: 'xl/workbook.xml', data: XMLHEAD +
+        '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" ' +
+        'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' +
+        names.map(function (n, i) {
+          return '<sheet name="' + x(n) + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>';
+        }).join('') + '</sheets></workbook>' },
+      { name: 'xl/_rels/workbook.xml.rels', data: XMLHEAD +
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+        sheets.map(function (s, i) {
+          return '<Relationship Id="rId' + (i + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet' + (i + 1) + '.xml"/>';
+        }).join('') +
+        '<Relationship Id="rId' + (sheets.length + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' },
+      { name: 'xl/styles.xml', data: STYLES }
+    ];
+    sheets.forEach(function (s, i) {
+      files.push({ name: 'xl/worksheets/sheet' + (i + 1) + '.xml', data: sheetXml(s) });
+    });
+    return zip(files);
+  }
+
+  function save(filename, sheets) {
+    var blob = build(sheets);
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+  }
+
+  window.TaxiXlsx = { build: build, save: save };
+})();
+
+</script>
+
+<script>
+/* =====================================================================================
+ * TAXI SHARM — SETTLEMENT PORTAL  ·  v16
+ *
+ * WHAT v16 FIXES — THE PORTAL WAS NEVER TALKING TO THE SHEET
+ * ----------------------------------------------------------
+ * The GitHub Pages build had no Apps Script URL in it at all. Its transport read:
+ *
+ *      var live = !!(google && google.script && google.script.run);
+ *      function call(fn,args,ok,fail){
+ *        if (live) { ...google.script.run... ; return; }
+ *        setTimeout(function(){ ok(window.TAXI_DEMO.run(fn,args)); }, 180);
+ *      }
+ *
+ * On GitHub Pages `google.script` does not exist, so `live` was always false and EVERY
+ * call was answered by the built-in demo book. The portal was showing invented figures
+ * that looked entirely real — right shapes, right colours, identities all closing at
+ * 0.00 — while the actual workbook was never read. That is why nothing ever synced.
+ *
+ * Three things changed, and the third matters most:
+ *   1. The Apps Script URL lives in TAXI_CFG in index.html and is used by fetch().
+ *   2. The demo book is DELETED. Not disabled — deleted. There is no code path left
+ *      that can put a made-up number on this screen.
+ *   3. A failure now FAILS. If the URL is wrong, the deployment is stale, or the network
+ *      is down, the portal says so in red and shows nothing. Silently plausible data is
+ *      far more dangerous than a visible error, because you act on it.
+ *
+ * WHAT v16 FIXES — THE LAG
+ * ------------------------
+ *   a. Only the page you are looking at is built. The old render() rebuilt all seven
+ *      pages of HTML on every refresh — hundreds of table rows parsed and thrown away.
+ *   b. Switching pages no longer hits the network. It used to call load() every time,
+ *      even when the range and the data were identical.
+ *   c. Polling moved from 20s to 60s, and a poll is skipped if the last one finished
+ *      less than 30s ago, if the tab is hidden, or if a field has focus.
+ *   d. The last payload is cached in localStorage, so opening the portal paints
+ *      immediately from cache and then refreshes in the background. The cache is
+ *      stamped and clearly labelled as cached until the live answer lands.
+ *   e. Requests have a 25s timeout and one automatic retry, so a single cold start of
+ *      the Apps Script container no longer leaves the screen stuck on "Loading".
+ *
+ * WHAT v16 ADDS — the v15 engine's new figures
+ * --------------------------------------------
+ *   · The COLLECTION POOL comes from the engine now, not from a guess on screen. The old
+ *     rule counted any day that did not transfer as still holding money, which
+ *     double-counted a Friday whose cash left inside Sunday's wire.
+ *   · A REVENUE page: the same money by component and by party, both sides.
+ *   · The ACH margin — what is charged to eNovate against what the bank actually takes.
+ *   · Formal naming throughout: ZED'S COMMISSION, ZED'S LINK FEE, ZED'S REVENUE.
+ *
+ * REQUIRES engine v15 or later. Publish a NEW VERSION of the Apps Script deployment
+ * after pasting Code.gs, or this URL keeps serving the old engine.
+ * ===================================================================================== */
+(function () {
+  'use strict';
+
+  var CFG = window.TAXI_CFG || {};
+  var API = String(CFG.apiUrl || '').trim();
+  var SYNC_MS = Number(CFG.syncMs) || 60000;
+  var MIN_GAP_MS = 30000;          /* never poll twice inside this window */
+  var REQ_TIMEOUT = 25000;
+
+  var CSS = [
+    '@keyframes tp-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}',
+    '@keyframes tp-spin{to{transform:rotate(360deg)}}',
+    '.tp{--teal-deep:#12474C;--teal:#1F6E74;--teal-bright:#35939A;--teal-pale:#E9F1F1;',
+    '--navy:#182643;--red:#C40202;--orange:#EB9F0B;--sand:#F2C230;--sand-deep:#D9A614;',
+    '--ok:#1B7A4A;--warn:#9A6108;--bad:#C40202;--ink:#111D1C;--muted:#6E7A79;--soft:#48524F;',
+    '--line:#E1E6E4;--canvas:#F3F6F4;--card:#FFFFFF;--r:12px;--r-lg:18px;',
+    '--shadow:0 1px 2px rgba(17,29,28,.05),0 8px 24px rgba(17,29,28,.06);',
+    '--pop:0 20px 50px rgba(17,29,28,.18);box-sizing:border-box;display:block;min-height:100vh;',
+    'background:var(--canvas);color:var(--ink);',
+    'font:400 14px/1.45 Outfit,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}',
+    '.tp *{box-sizing:border-box}',
+    '.tp .num{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;letter-spacing:-.02em}',
+    '.tp button{font-family:inherit}',
+    '.tp ::selection{background:var(--sand);color:#2A1C00}',
+    '.tp :focus-visible{outline:2px solid var(--teal-bright);outline-offset:2px;border-radius:6px}',
+    '.tp svg.ic{width:16px;height:16px;flex-shrink:0}',
+    '.tp .shell{display:flex;min-height:100vh}',
+
+    /* rail */
+    '.tp .rail{width:236px;flex-shrink:0;background:linear-gradient(172deg,#17575C,#0C3438 72%);',
+    'display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:20;transition:width .18s}',
+    '.tp.tight .rail{width:74px}',
+    '.tp .brand{padding:16px 15px 13px;display:flex;align-items:center;gap:12px}',
+    '.tp .plate{width:52px;height:52px;border-radius:14px;background:#FFF;flex-shrink:0;overflow:hidden;',
+    'box-shadow:0 4px 14px rgba(0,0,0,.28);display:block;cursor:pointer}',
+    '.tp .plate img{width:100%;height:100%;object-fit:cover;display:block}',
+    '.tp .wordmark b{display:block;color:#FFF;font-size:16px;font-weight:600;letter-spacing:-.02em;white-space:nowrap}',
+    '.tp .wordmark span{display:block;color:#8CC0C2;font-size:9px;font-weight:700;letter-spacing:.18em;',
+    'text-transform:uppercase;margin-top:3px;white-space:nowrap}',
+    '.tp.tight .wordmark{display:none}.tp.tight .brand{padding:14px 0 12px;justify-content:center}',
+    '.tp .railBtn{position:absolute;top:32px;left:222px;width:24px;height:24px;border-radius:50%;',
+    'background:#FFF;border:1px solid var(--line);color:var(--teal-deep);cursor:pointer;display:flex;',
+    'align-items:center;justify-content:center;padding:0;z-index:22;box-shadow:0 2px 8px rgba(17,29,28,.18);transition:left .18s}',
+    '.tp.tight .railBtn{left:60px}',
+    '.tp .railBtn svg{width:13px;height:13px;transition:transform .18s}',
+    '.tp.tight .railBtn svg{transform:rotate(180deg)}',
+    '.tp .railBtn:hover{background:var(--teal-deep);color:#FFF;border-color:var(--teal-deep)}',
+    '.tp nav{padding:6px 0;display:flex;flex-direction:column;gap:1px}',
+    '.tp nav a{display:flex;align-items:center;gap:11px;padding:10px 16px;color:#C6DEDE;font-size:13.5px;',
+    'font-weight:500;cursor:pointer;border-left:3px solid transparent;white-space:nowrap;text-decoration:none}',
+    '.tp nav a:hover{background:rgba(255,255,255,.07);color:#FFF}',
+    '.tp nav a.on{background:rgba(255,255,255,.13);color:#FFF;border-left-color:var(--sand);font-weight:600}',
+    '.tp nav a.on svg.ic{color:var(--sand)}',
+    '.tp nav a .kb{margin-left:auto;font-size:9.5px;font-weight:700;color:#5E8E90;font-family:"IBM Plex Mono",monospace}',
+    '.tp nav a .cnt{margin-left:auto;font-size:10px;font-weight:700;background:var(--red);color:#FFF;border-radius:20px;padding:1px 7px}',
+    '.tp.tight nav a{padding:12px 0;justify-content:center;border-left:none;border-right:3px solid transparent}',
+    '.tp.tight nav a.on{border-right-color:var(--sand)}',
+    '.tp.tight nav a .tx,.tp.tight nav a .kb,.tp.tight nav a .cnt{display:none}',
+    '.tp .railFoot{margin-top:auto;padding:14px 16px 16px;border-top:1px solid rgba(255,255,255,.14);cursor:pointer}',
+    '.tp .railFoot:hover{background:rgba(255,255,255,.05)}',
+    '.tp .railFoot .l{font-size:8.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--sand)}',
+    '.tp .railFoot .v{font-size:25px;font-weight:600;color:#FFF;margin-top:3px;letter-spacing:-.03em}',
+    '.tp .railFoot .n{font-size:10.5px;color:#8FBCBE;margin-top:3px;line-height:1.4}',
+    '.tp.tight .railFoot{display:none}',
+    '.tp .weave{height:8px;display:flex;flex-shrink:0}.tp .weave i{flex:1}',
+
+    /* header + sync pill */
+    '.tp main{flex:1;min-width:0;display:flex;flex-direction:column}',
+    '.tp header{background:var(--card);border-bottom:1px solid var(--line);padding:14px 24px 13px;',
+    'display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:15}',
+    '.tp header .ht{min-width:0}',
+    '.tp header .eyebrow{font-size:8.5px;font-weight:700;letter-spacing:.17em;text-transform:uppercase;color:var(--teal-bright)}',
+    '.tp header h1{margin:3px 0 0;font-size:23px;font-weight:600;letter-spacing:-.03em;line-height:1.05}',
+    '.tp header p.sub{margin:5px 0 0;font-size:12.5px;color:var(--muted);max-width:70ch}',
+    '.tp header .hr{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}',
+    '.tp .sync{display:inline-flex;align-items:center;gap:7px;height:37px;padding:0 12px;border-radius:20px;',
+    'font-size:11.5px;font-weight:600;cursor:pointer;border:1px solid transparent;white-space:nowrap}',
+    '.tp .sync.live{background:#E6F3EC;color:var(--ok)}',
+    '.tp .sync.busy{background:var(--teal-pale);color:var(--teal-deep)}',
+    '.tp .sync.stale{background:#FDF3DF;color:var(--warn)}',
+    '.tp .sync.err{background:#FBE6E5;color:var(--bad)}',
+    '.tp .sync i{width:8px;height:8px;border-radius:50%;background:currentColor;display:block}',
+    '.tp .sync.busy i{border-radius:50%;border:2px solid currentColor;border-top-color:transparent;',
+    'width:12px;height:12px;background:none;animation:tp-spin .7s linear infinite}',
+
+    /* controls */
+    '.tp .btn{border:1px solid transparent;border-radius:9px;height:37px;padding:0 14px;font-size:12.5px;',
+    'font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:7px;line-height:1;transition:.13s}',
+    '.tp .btn:active{transform:translateY(1px)}',
+    '.tp .btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}',
+    '.tp .btn-primary{background:var(--teal-deep);color:#FFF}',
+    '.tp .btn-primary:hover:not([disabled]){background:#0A3034}',
+    '.tp .btn-accent{background:var(--sand);color:#3A2600}',
+    '.tp .btn-accent:hover:not([disabled]){background:var(--sand-deep)}',
+    '.tp .btn-ghost{background:#FFF;color:var(--soft);border-color:var(--line)}',
+    '.tp .btn-ghost:hover:not([disabled]){border-color:var(--teal-bright);color:var(--teal-deep)}',
+    '.tp .pill{font-size:11.5px;font-weight:600;padding:0 13px;height:37px;border-radius:20px;',
+    'background:var(--teal-pale);color:var(--teal-deep);display:inline-flex;align-items:center;gap:7px;white-space:nowrap}',
+    '.tp .rangebox{position:relative}',
+    '.tp .rangebtn{display:inline-flex;align-items:center;gap:9px;height:37px;padding:0 12px;',
+    'border:1px solid var(--line);background:#FFF;border-radius:9px;cursor:pointer;color:var(--ink)}',
+    '.tp .rangebtn:hover{border-color:var(--teal-bright)}',
+    '.tp .rangebtn.act{border-color:var(--teal-deep);box-shadow:0 0 0 3px rgba(18,71,76,.1)}',
+    '.tp .rangebtn .rl b{display:block;font-size:12.5px;font-weight:600;text-align:left;font-family:"IBM Plex Mono",monospace}',
+    '.tp .rangebtn .rl i{display:block;font-style:normal;font-size:8.5px;font-weight:700;letter-spacing:.13em;',
+    'text-transform:uppercase;color:var(--muted);margin-top:2px;text-align:left}',
+    '.tp .pop{position:absolute;top:calc(100% + 8px);right:0;width:286px;background:#FFF;',
+    'border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--pop);padding:8px;z-index:40;animation:tp-in .14s}',
+    '.tp .pop .opt{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 11px;',
+    'border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:500}',
+    '.tp .pop .opt:hover{background:var(--teal-pale)}',
+    '.tp .pop .opt.on{background:var(--teal-deep);color:#FFF;font-weight:600}',
+    '.tp .pop .opt span{font-size:10.5px;opacity:.72;font-family:"IBM Plex Mono",monospace}',
+    '.tp .pop .cust{border-top:1px solid var(--line);margin-top:6px;padding:9px 3px 2px;display:flex;align-items:center;gap:7px}',
+    '.tp .pop .cust input{flex:1;border:1px solid var(--line);border-radius:7px;padding:7px 8px;',
+    'font-size:12.5px;font-family:"IBM Plex Mono",monospace;min-width:0}',
+    '.tp .chip{border:1px solid var(--line);background:#FFF;color:var(--muted);border-radius:20px;',
+    'padding:7px 13px;font-size:11.5px;font-weight:600;cursor:pointer}',
+    '.tp .chip:hover{border-color:var(--teal-bright);color:var(--teal-deep)}',
+    '.tp .chip.on{background:var(--teal-deep);border-color:var(--teal-deep);color:#FFF}',
+    '.tp .search{position:relative;flex:1 1 220px;max-width:320px}',
+    '.tp .search input{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px 9px 33px;',
+    'font-size:13px;font-family:inherit;color:var(--ink);background:#FFF}',
+    '.tp .search input:focus{outline:none;border-color:var(--teal-bright);box-shadow:0 0 0 3px rgba(53,147,154,.13)}',
+    '.tp .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}',
+
+    /* body + panels */
+    '.tp .body{padding:18px 24px 56px;display:flex;flex-direction:column;gap:14px;animation:tp-in .18s}',
+    '.tp .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:17px 19px;box-shadow:var(--shadow)}',
+    '.tp .panel>h2{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;',
+    'color:var(--teal);margin:0 0 13px;display:flex;align-items:center;gap:9px}',
+    '.tp .panel>h2 em{font-style:normal;margin-left:auto;font-size:10.5px;letter-spacing:0;text-transform:none;color:var(--muted);font-weight:500}',
+    '.tp .g2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px}',
+    '@media (max-width:1120px){.tp .g2{grid-template-columns:1fr}}',
+    '.tp .strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));background:var(--card);',
+    'border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}',
+    '.tp .strip>div{padding:13px 16px;border-right:1px solid var(--line)}',
+    '.tp .strip>div:last-child{border-right:none}',
+    '.tp .strip .l{font-size:8.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}',
+    '.tp .strip .v{font-size:20px;font-weight:500;margin-top:5px;letter-spacing:-.025em}',
+    '.tp .strip .n{font-size:10.5px;color:var(--muted);margin-top:2px}',
+
+    /* ticket */
+    '.tp .ticket{background:linear-gradient(150deg,#17575C,#0D3A3E);border-radius:var(--r-lg);color:#FFF;',
+    'overflow:hidden;display:grid;grid-template-columns:minmax(300px,1fr) minmax(320px,.95fr);box-shadow:var(--shadow)}',
+    '.tp .ticket .stub{padding:24px 26px 26px;position:relative}',
+    '.tp .ticket .side{padding:24px 26px 26px 32px;background:rgba(255,255,255,.05);border-left:1px dashed rgba(255,255,255,.22)}',
+    '.tp .eb{font-size:9px;font-weight:700;letter-spacing:.19em;text-transform:uppercase;color:var(--sand)}',
+    '.tp .amt{font-size:52px;font-weight:600;color:var(--sand);line-height:1;margin:10px 0 0;letter-spacing:-.04em}',
+    '.tp .amt sup{font-size:14px;font-weight:600;margin-left:8px;letter-spacing:.07em;vertical-align:.95em;color:#CFAE4C}',
+    '.tp .st{display:flex;align-items:flex-start;gap:10px;margin-top:15px;font-size:13px;font-weight:600;',
+    'padding:10px 13px;border-radius:10px;line-height:1.5}',
+    '.tp .st.go{background:#10402B;color:#A7E5C4}',
+    '.tp .st.hold{background:#6E2E0A;color:#FFD9A8}',
+    '.tp .st.stop{background:#5B1010;color:#FFC9C6}',
+    '.tp .acts{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}',
+    '.tp .ticket .btn-ghost{background:rgba(255,255,255,.11);color:#FFF;border-color:rgba(255,255,255,.28)}',
+    '.tp .ticket .btn-ghost:hover:not([disabled]){background:rgba(255,255,255,.2);color:#FFF}',
+    '.tp .meter .ln{display:flex;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px dashed rgba(255,255,255,.16);font-size:12.5px}',
+    '.tp .meter .ln:last-child{border-bottom:none}',
+    '.tp .meter .ln .k{color:#A9CFD0;flex:1}.tp .meter .ln .v{color:#FFF;font-weight:500}',
+    '.tp .meter .ln.gap{border-bottom-style:solid;border-bottom-color:rgba(255,255,255,.3)}',
+    '.tp .meter .ln.key{padding-top:11px}',
+    '.tp .meter .ln.key .k{color:#FFF;font-weight:600}',
+    '.tp .meter .ln.key .v{color:var(--sand);font-weight:600;font-size:16px}',
+
+    /* pool */
+    '.tp .poolcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);',
+    'box-shadow:var(--shadow);padding:20px 22px;display:grid;',
+    'grid-template-columns:minmax(240px,.9fr) minmax(0,1.5fr);gap:22px;align-items:center}',
+    '@media (max-width:900px){.tp .poolcard{grid-template-columns:1fr}}',
+    '.tp .poolcard .big{font-size:46px;font-weight:600;letter-spacing:-.04em;line-height:1;color:var(--teal-deep);margin-top:8px}',
+    '.tp .poolcard .big sup{font-size:13px;color:var(--muted);margin-left:7px;vertical-align:.9em;letter-spacing:.06em}',
+    '.tp .bar{height:26px;border-radius:7px;overflow:hidden;display:flex;background:var(--canvas)}',
+    '.tp .bar i{display:block;height:100%}',
+    '.tp .keys{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px}',
+    '.tp .keys div{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--soft)}',
+    '.tp .keys i{width:10px;height:10px;border-radius:3px;display:block}',
+    '.tp .keys b{font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--ink)}',
+    '.tp .nextbox{border:1px dashed var(--teal-bright);background:#F2F8F8;border-radius:var(--r);padding:15px 17px}',
+    '.tp .nextbox .row{display:flex;align-items:baseline;gap:10px;font-size:12.5px;padding:5px 0}',
+    '.tp .nextbox .row .k{color:var(--soft);flex:1}',
+    '.tp .nextbox .row.tot{border-top:1px solid var(--line);margin-top:6px;padding-top:9px;font-weight:600}',
+    '.tp .nextbox .row.tot .v{font-size:21px;color:var(--teal-deep);font-weight:600}',
+    '.tp .wk{display:flex;gap:6px;margin-top:4px}',
+    '.tp .wk div{flex:1;text-align:center;border-radius:8px;padding:8px 2px;border:1px solid var(--line);background:#FFF}',
+    '.tp .wk div .d{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}',
+    '.tp .wk div .m{font-size:11.5px;font-weight:600;margin-top:4px;font-family:"IBM Plex Mono",monospace}',
+    '.tp .wk div.off{background:#FAFAF8;color:var(--muted)}.tp .wk div.off .d{color:#A8B2B0}',
+    '.tp .wk div.pay{border-color:var(--teal-deep);background:#EAF3F3}',
+    '.tp .wk div.pay .d{color:var(--teal-deep)}',
+    '.tp .wk div.today{box-shadow:0 0 0 2px var(--sand)}',
+
+    /* tables */
+    '.tp table.data{width:100%;border-collapse:collapse;font-size:12.5px}',
+    '.tp table.data th{text-align:left;font-size:8.5px;font-weight:700;letter-spacing:.12em;',
+    'text-transform:uppercase;color:var(--muted);padding:0 9px 9px 0;border-bottom:1px solid var(--line);white-space:nowrap}',
+    '.tp table.data td{padding:9px 9px 9px 0;border-bottom:1px solid #F1F3F2;vertical-align:middle}',
+    '.tp table.data tbody tr:hover td{background:#FAFCFB}',
+    '.tp table.data tr:last-child td{border-bottom:none}',
+    '.tp table.data .right{text-align:right;padding-right:0;padding-left:9px}',
+    '.tp table.data th.right{text-align:right}',
+    '.tp table.data tr.tot td{font-weight:600;border-top:2px solid var(--line);background:#F9FBFA}',
+    '.tp table.data tr.sep td{background:#F0F5F3;font-weight:700;color:var(--teal-deep);',
+    'font-size:9px;letter-spacing:.12em;text-transform:uppercase}',
+    '.tp table.data tr.dim td{color:var(--muted)}',
+    '.tp table.data th.s{cursor:pointer;user-select:none}',
+    '.tp table.data th.s:hover{color:var(--teal)}',
+    '.tp table.data th.s:after{content:"\\2195";opacity:.3;margin-left:4px;font-size:9px}',
+    '.tp table.data th.s.asc:after{content:"\\2191";opacity:1;color:var(--teal)}',
+    '.tp table.data th.s.desc:after{content:"\\2193";opacity:1;color:var(--teal)}',
+    '.tp .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}',
+    '.tp .list{max-height:600px;overflow:auto;-webkit-overflow-scrolling:touch}',
+    '.tp .list table.data thead th{position:sticky;top:0;background:#FFF;z-index:2;box-shadow:inset 0 -1px 0 var(--line)}',
+    '.tp a.lk{cursor:pointer;color:inherit;border-bottom:1px dotted #B9C4C3}',
+    '.tp a.lk:hover{color:var(--teal-deep);border-bottom-color:var(--teal)}',
+    '.tp .bdg{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:600;white-space:nowrap}',
+    '.tp .bdg.good{background:#E6F3EC;color:var(--ok)}',
+    '.tp .bdg.wait{background:#FDF3DF;color:var(--warn)}',
+    '.tp .bdg.bad{background:#FBE6E5;color:var(--bad)}',
+    '.tp .bdg.mute{background:#EEF0EF;color:var(--muted)}',
+    '.tp .tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 13px}',
+    '.tp .hits{font-size:11px;color:var(--muted);margin-left:auto;white-space:nowrap}',
+
+    /* misc */
+    '.tp .frm{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}',
+    '.tp .fld{display:flex;flex-direction:column;gap:6px}',
+    '.tp .fld label{font-size:8.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}',
+    '.tp .fld input{border:1px solid var(--line);border-radius:9px;height:37px;padding:0 12px;',
+    'font-size:13.5px;font-family:"IBM Plex Mono",monospace;color:var(--ink);width:190px;background:#FFF}',
+    '.tp .fld input:focus{outline:none;border-color:var(--teal-bright);box-shadow:0 0 0 3px rgba(53,147,154,.13)}',
+    '.tp .alert{border-radius:var(--r);padding:12px 17px;font-size:12.5px;font-weight:500;',
+    'background:#FBE6E5;color:var(--bad);border:1px solid #F2CFCD;line-height:1.55}',
+    '.tp .alert.warn{background:#FDF3DF;color:var(--warn);border-color:#EDD9A3}',
+    '.tp .note{font-size:11.5px;color:var(--muted);line-height:1.55;margin:10px 0 0;display:flex;gap:8px}',
+    '.tp .note svg{color:var(--teal-bright);margin-top:1px;flex-shrink:0}',
+    '.tp .loading{text-align:center;padding:54px;color:var(--muted);font-size:13.5px;line-height:1.7}',
+    '.tp .loading.err{color:var(--bad)}',
+    '.tp .loading code{font-family:"IBM Plex Mono",monospace;font-size:11.5px;background:#F3F6F4;',
+    'padding:2px 6px;border-radius:4px;word-break:break-all}',
+    '.tp .wf{display:flex;align-items:center;gap:12px;margin-bottom:8px}',
+    '.tp .wf .lb{width:216px;font-size:12.5px;color:var(--soft);flex-shrink:0}',
+    '.tp .wf.key .lb,.tp .wf.key .vl{color:var(--ink);font-weight:600}',
+    '.tp .wf .tk{flex:1;height:17px;background:var(--canvas);border-radius:5px;overflow:hidden}',
+    '.tp .wf .tk>div{height:100%;border-radius:5px}',
+    '.tp .wf .vl{width:104px;text-align:right;font-size:12.5px;color:var(--soft);flex-shrink:0;font-family:"IBM Plex Mono",monospace}',
+    '.tp details.acc{border:1px solid var(--line);border-radius:var(--r);background:var(--card);box-shadow:var(--shadow)}',
+    '.tp details.acc+details.acc{margin-top:9px}',
+    '.tp details.acc>summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;',
+    'align-items:center;gap:12px;font-size:13.5px;font-weight:600}',
+    '.tp details.acc>summary::-webkit-details-marker{display:none}',
+    '.tp details.acc[open]>summary{border-bottom:1px solid var(--line)}',
+    '.tp details.acc>summary .caret{margin-left:auto;color:var(--muted);display:flex}',
+    '.tp details.acc[open]>summary .caret svg{transform:rotate(180deg)}',
+    '.tp details.acc .in{padding:16px 18px 19px}',
+    '.tp .tag{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap}',
+    '.tp .tag.ok{background:#E6F3EC;color:var(--ok)}',
+    '.tp .tag.no{background:#FBE6E5;color:var(--bad)}',
+    '.tp .tag.mid{background:#FDF3DF;color:var(--warn)}',
+    '.tp .chk{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:9px}',
+    '.tp .chk .c{background:#F7F9F8;border:1px solid var(--line);border-radius:9px;padding:10px 13px;',
+    'display:flex;align-items:center;gap:11px}',
+    '.tp .chk .c .t{font-size:11.5px;line-height:1.45;flex:1}',
+    '.tp .rates{display:grid;grid-template-columns:repeat(auto-fit,minmax(146px,1fr));gap:9px}',
+    '.tp .rate{background:#F7F9F8;border:1px solid var(--line);border-radius:9px;padding:11px 13px}',
+    '.tp .rate .l{font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;',
+    'color:var(--muted);line-height:1.5;min-height:25px}',
+    '.tp .rate .v{font-size:17px;font-weight:600;margin-top:4px;color:var(--teal-deep)}',
+    '.tp .step{display:flex;align-items:flex-start;gap:14px;padding:9px 0;border-bottom:1px dashed var(--line)}',
+    '.tp .step:last-child{border-bottom:none}',
+    '.tp .step .k{width:26px;height:26px;border-radius:50%;background:var(--teal-pale);color:var(--teal-deep);',
+    'font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}',
+    '.tp .step .t{flex:1;font-size:12.5px;line-height:1.5}',
+    '.tp .step .v{width:112px;text-align:right;font-size:13.5px;font-weight:600;flex-shrink:0;font-family:"IBM Plex Mono",monospace}',
+    '.tp .cw{width:100%;overflow:hidden}.tp .cw svg{width:100%;height:auto;display:block}',
+    '.tp .lg{font-size:11px;color:var(--muted);margin:0 0 12px;display:flex;gap:15px;flex-wrap:wrap}',
+    '.tp .lg b{display:inline-flex;align-items:center;gap:7px;font-weight:500}',
+    '.tp .lg i{width:10px;height:10px;border-radius:3px;display:block}',
+    '.tp .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(80px);',
+    'background:var(--ink);color:#FFF;padding:13px 19px;border-radius:var(--r);font-size:13px;',
+    'font-weight:500;z-index:60;box-shadow:0 14px 40px rgba(0,0,0,.32);max-width:min(560px,92vw);',
+    'opacity:0;transition:transform .22s,opacity .22s;line-height:1.55}',
+    '.tp .toast.on{transform:translateX(-50%) translateY(0);opacity:1}',
+    '.tp .toast.bad{background:#5A1010}.tp .toast.good{background:#0F3F2A}',
+    '@media (max-width:900px){',
+    '.tp .shell{flex-direction:column}',
+    '.tp .rail{width:100%!important;height:auto;position:static;flex-direction:row;align-items:center;overflow-x:auto;padding:8px 10px}',
+    '.tp .railBtn,.tp .railFoot,.tp .wordmark{display:none}',
+    '.tp .brand{padding:0 10px 0 0}.tp .plate{width:38px;height:38px;border-radius:10px}',
+    '.tp nav{flex-direction:row;gap:2px}',
+    '.tp nav a{border-left:none;border-bottom:3px solid transparent;border-radius:8px;padding:9px 12px}',
+    '.tp nav a.on{border-left:none;border-bottom-color:var(--sand)}',
+    '.tp header{padding:12px 15px}.tp .body{padding:14px 15px 40px}',
+    '.tp .ticket{grid-template-columns:1fr}',
+    '.tp .ticket .side{border-left:none;border-top:1px dashed rgba(255,255,255,.22)}',
+    '.tp .amt{font-size:38px}.tp .pop{right:auto;left:0}}',
+    '@media (prefers-reduced-motion:reduce){.tp *{transition:none!important;animation:none!important}}'
+  ].join('');
+
+  var ICONS = {
+    today: '<path d="M8 1.6v2M8 12.4v2M1.6 8h2M12.4 8h2M3.5 3.5l1.4 1.4M11.1 11.1l1.4 1.4M12.5 3.5l-1.4 1.4M4.9 11.1l-1.4 1.4"/><circle cx="8" cy="8" r="3"/>',
+    pool: '<path d="M2 5.2c0-1.5 2.7-2.7 6-2.7s6 1.2 6 2.7-2.7 2.7-6 2.7-6-1.2-6-2.7z"/><path d="M2 5.2v5.6c0 1.5 2.7 2.7 6 2.7s6-1.2 6-2.7V5.2"/><path d="M2 8c0 1.5 2.7 2.7 6 2.7s6-1.2 6-2.7"/>',
+    revenue: '<path d="M2.4 13.4V9.2M6.1 13.4V4.6M9.9 13.4V7.1M13.6 13.4V2.6"/>',
+    history: '<circle cx="8" cy="8" r="6.1"/><path d="M8 4.6V8l2.6 1.6"/>',
+    drivers: '<circle cx="6" cy="5.6" r="2.5"/><path d="M1.8 13.8c0-2.3 1.9-3.8 4.2-3.8s4.2 1.5 4.2 3.8"/><circle cx="12" cy="6.4" r="1.9"/><path d="M11.4 10.2c1.7.2 2.8 1.5 2.8 3.6"/>',
+    links: '<rect x="1.8" y="3.6" width="12.4" height="8.8" rx="1.8"/><path d="M1.8 6.9h12.4M4.4 10h2.8"/>',
+    remit: '<path d="M3 1.9h7l3 3v9.2H3z"/><path d="M9.6 1.9v3.3h3.3M5.4 9h5.2M5.4 11.3h3.4"/>',
+    recon: '<circle cx="8" cy="8" r="6.1"/><path d="M5.3 8.3l2 2 3.4-4"/>',
+    cal: '<rect x="2" y="3.4" width="12" height="10.6" rx="1.8"/><path d="M2 6.8h12M5.4 1.9v2.6M10.6 1.9v2.6"/>',
+    down: '<path d="M4 6.2L8 10l4-3.8"/>',
+    exp: '<path d="M8 10.6V2.2M4.9 5.3L8 2.2l3.1 3.1"/><path d="M2.4 10v2.4a1.6 1.6 0 001.6 1.6h8a1.6 1.6 0 001.6-1.6V10"/>',
+    find: '<circle cx="6.9" cy="6.9" r="4.4"/><path d="M10.2 10.2L14 14"/>',
+    tick: '<path d="M2.8 8.4l3 3 7-7.2"/>',
+    bang: '<circle cx="8" cy="8" r="6.2"/><path d="M8 4.8v4M8 10.8v.4"/>',
+    info: '<circle cx="8" cy="8" r="6.2"/><path d="M8 7.4v3.8M8 5.1v.4"/>',
+    copy: '<rect x="5.4" y="5.4" width="8.4" height="8.4" rx="1.6"/><path d="M10.6 5.4V3.8a1.6 1.6 0 00-1.6-1.6H3.8a1.6 1.6 0 00-1.6 1.6v5.2a1.6 1.6 0 001.6 1.6h1.6"/>',
+    send: '<path d="M14 2L7.2 8.9M14 2L9.7 14 7.2 8.9 2 6.4z"/>',
+    left: '<path d="M10 3L5 8l5 5"/>',
+    right: '<path d="M6 3l5 5-5 5"/>',
+    sync: '<path d="M13.4 6.6A5.6 5.6 0 003 5.4M2.6 9.4a5.6 5.6 0 0010.4 1.2"/><path d="M13.6 2.8v3.8h-3.8M2.4 13.2V9.4h3.8"/>'
+  };
+  function ic(n, cls) {
+    return '<svg class="ic' + (cls ? ' ' + cls : '') + '" viewBox="0 0 16 16" fill="none" ' +
+      'stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+      (ICONS[n] || '') + '</svg>';
+  }
+
+  var C = { teal: '#1F6E74', tealDeep: '#12474C', tealBright: '#35939A', navy: '#182643',
+    red: '#C40202', orange: '#EB9F0B', sand: '#F2C230', ok: '#1B7A4A', warn: '#9A6108',
+    bad: '#C40202', muted: '#6E7A79', soft: '#48524F', ink: '#111D1C', line: '#E1E6E4',
+    grid: '#ECEFEE' };
+
+  var PAGES = [
+    { k: 'today', nav: 'Today', t: 'Today', eb: 'Transfer due', ic: 'today',
+      sub: 'The one amount to send to eNovate, and the bank deposit that unlocks it.', dated: 'day' },
+    { k: 'pool', nav: 'Pool', t: 'Collection Pool', eb: 'Landed, not yet sent', ic: 'pool',
+      sub: 'Driver cash that reached the bank through payment links and has not gone out to eNovate yet.', dated: 'book' },
+    { k: 'revenue', nav: 'Revenue', t: 'Revenue Split', eb: 'By component and by party', ic: 'revenue',
+      sub: "Where every piaster goes: service commission, platform fee, VAT, link fees and the bank margin \u2014 Zed's against eNovate.", dated: 'thisMonth' },
+    { k: 'history', nav: 'Settlement History', t: 'Settlement History', eb: 'Day by day', ic: 'history',
+      sub: 'One row per day: what landed, what was retained, what was sent, and the reference it went out on.', dated: 'thisWeek' },
+    { k: 'drivers', nav: 'Drivers', t: 'Drivers', eb: 'Balances', ic: 'drivers',
+      sub: 'What each driver owes right now, what is held as credit, and who is blocked.', dated: null },
+    { k: 'links', nav: 'Payment Links', t: 'Payment Links', eb: 'Top-ups', ic: 'links',
+      sub: 'Every top-up link, what the driver paid, and whether that cash has reached the bank.', dated: 'thisWeek' },
+    { k: 'remit', nav: 'eNovate Sheet', t: 'eNovate Remittance Sheet', eb: 'Send with the transfer', ic: 'remit',
+      sub: 'The drivers whose money actually landed in the account, line by line.', dated: 'thisWeek' },
+    { k: 'recon', nav: 'Reconciliation', t: 'Reconciliation', eb: 'Whole book', ic: 'recon',
+      sub: 'Every identity must close at 0.00. Open only what is red.', dated: null }
+  ];
+  var PAGEMAP = {};
+  PAGES.forEach(function (p) { PAGEMAP[p.k] = p; });
+
+  var PRESETS = [['day', 'That day only'], ['thisWeek', 'This work week'],
+    ['lastWeek', 'Last work week'], ['cycle', 'Since the last transfer'], ['last7', 'Last 7 days'],
+    ['thisMonth', 'This month'], ['lastMonth', 'Last month'], ['book', 'Whole book']];
+  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  /* ------------------------------------------------------------------ format */
+  function fmt(n) {
+    return (Number(n) || 0).toLocaleString('en-US',
+      { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  /* null means NOT KNOWN and must never print as 0.00 — that is the whole point of the
+     engine returning null for an unpriced bank charge. */
+  function fmtN(n) { return (n === null || n === undefined) ? '\u2014 not known' : fmt(n); }
+  function pct(n) {
+    return (Number(n) || 0).toLocaleString('en-US',
+      { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+  }
+  function int(n) { return String(Number(n) || 0); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function iso(d) {
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' +
+      ('0' + d.getDate()).slice(-2);
+  }
+  function fromIso(s) { var a = String(s || '').split('-'); return new Date(+a[0], +a[1] - 1, +a[2]); }
+  function dm(s) {
+    return s ? Number(String(s).slice(8, 10)) + ' ' + MON[Number(String(s).slice(5, 7)) - 1] : '';
+  }
+  function dow(s) { return s ? DOW[fromIso(s).getDay()] : ''; }
+  function w(v, max) {
+    var p = max > 0 ? (Math.abs(Number(v) || 0) / max) * 100 : 0;
+    return Math.min(100, p).toFixed(2) + '%';
+  }
+  function addD(s, n) { var d = fromIso(s); d.setDate(d.getDate() + n); return iso(d); }
+  function clock(ms) {
+    var d = new Date(ms);
+    return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  }
+
+  function parseWeek(txt) {
+    var s = String(txt === null || txt === undefined ? '' : txt).toLowerCase()
+      .replace(/[\u2013\u2014]/g, '-').replace(/\bto\b/g, '-').replace(/\bthrough\b/g, '-');
+    var names = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'], set = {}, n = 0, i;
+    var rng = /(sun|mon|tue|wed|thu|fri|sat)[a-z]*\s*-\s*(sun|mon|tue|wed|thu|fri|sat)[a-z]*/g, m;
+    while ((m = rng.exec(s)) !== null) {
+      var a = names.indexOf(m[1]), b = names.indexOf(m[2]), guard = 0, k = a;
+      while (guard++ < 8) { if (!set[k]) { set[k] = 1; n++; } if (k === b) break; k = (k + 1) % 7; }
+    }
+    for (i = 0; i < 7; i++) if (s.indexOf(names[i]) >= 0 && !set[i]) { set[i] = 1; n++; }
+    if (!n) { set[0] = set[1] = set[2] = set[3] = set[4] = 1; }
+    return set;
+  }
+  function weekText(set) {
+    var o = [];
+    for (var i = 0; i < 7; i++) if (set[i]) o.push(DOW[i]);
+    return o.join(', ');
+  }
+
+  /* ------------------------------------------------------------------ state */
+  var S = {
+    page: 'today', data: null, ready: false, busy: false, sig: '', tight: false, pop: false,
+    driver: 'all', focus: '', open: {}, rng: {}, err: '', cached: false,
+    lastOk: 0, loadedKey: '', week: { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1 }, holidays: {}
+  };
+  PAGES.forEach(function (p) { if (p.dated) S.rng[p.k] = { preset: p.dated, start: '', end: '' }; });
+
+  var LS = 'taxisharm.portal.v16';
+  try {
+    var saved = JSON.parse(localStorage.getItem(LS) || '{}');
+    if (saved.page && PAGEMAP[saved.page]) S.page = saved.page;
+    if (saved.tight) S.tight = true;
+    if (saved.rng) Object.keys(saved.rng).forEach(function (k) {
+      if (S.rng[k]) S.rng[k] = saved.rng[k];
+    });
+  } catch (e) {}
+  function persist() {
+    try {
+      localStorage.setItem(LS, JSON.stringify({ page: S.page, tight: S.tight, rng: S.rng }));
+    } catch (e) {}
+  }
+
+  var root = null;
+  function q(id) { return root ? root.querySelector('#' + id) : null; }
+
+  function isWorkDay(d) {
+    if (!d) return false;
+    if (S.holidays[d]) return false;
+    return !!S.week[fromIso(d).getDay()];
+  }
+  function nextWorkDay(d) { var g = 0, x = d; while (!isWorkDay(x) && g++ < 40) x = addD(x, 1); return x; }
+  function prevWorkDay(d) { var g = 0, x = addD(d, -1); while (!isWorkDay(x) && g++ < 40) x = addD(x, -1); return x; }
+  function weekStart(d) { var x = fromIso(d); x.setDate(x.getDate() - x.getDay()); return iso(x); }
+
+  /* ------------------------------------------------------------------ ranges */
+  function rangeFor(preset) {
+    var t = iso(new Date()), d = S.data;
+    var minD = (d && d.filters && d.filters.minDate) || addD(t, -60);
+    if (preset === 'day') {
+      return { start: S.focus || (d && d.focus && d.focus.date) || t,
+               end: S.focus || (d && d.focus && d.focus.date) || t };
+    }
+    if (preset === 'thisWeek') return { start: weekStart(t), end: t };
+    if (preset === 'lastWeek') { var ws = weekStart(t); return { start: addD(ws, -7), end: addD(ws, -1) }; }
+    if (preset === 'last7') return { start: addD(t, -6), end: t };
+    if (preset === 'thisMonth') {
+      var n = new Date();
+      return { start: iso(new Date(n.getFullYear(), n.getMonth(), 1)), end: t };
+    }
+    if (preset === 'lastMonth') {
+      var m = new Date();
+      return { start: iso(new Date(m.getFullYear(), m.getMonth() - 1, 1)),
+               end: iso(new Date(m.getFullYear(), m.getMonth(), 0)) };
+    }
+    if (preset === 'cycle') {
+      var last = '';
+      if (d && d.days) d.days.forEach(function (r) { if (Number(r.net) > 0) last = r.date; });
+      return { start: last ? addD(last, 1) : addD(t, -6), end: t };
+    }
+    return { start: minD, end: t };
+  }
+  function activeRange() {
+    var cfg = S.rng[S.page];
+    if (!cfg) return { start: '', end: '' };
+    if (cfg.preset === 'custom') return { start: cfg.start, end: cfg.end };
+    return rangeFor(cfg.preset);
+  }
+  function rangeLabel() {
+    var cfg = S.rng[S.page];
+    if (!cfg) return '';
+    for (var i = 0; i < PRESETS.length; i++) if (PRESETS[i][0] === cfg.preset) return PRESETS[i][1];
+    return 'Custom range';
+  }
+  function rangeText() {
+    var r = activeRange();
+    if (!r.start && !r.end) return 'Everything';
+    if (r.start === r.end) return dow(r.start) + ' ' + dm(r.start);
+    return dm(r.start) + '  \u2192  ' + dm(r.end);
+  }
+  function opts() {
+    var r = activeRange();
+    return { start: r.start, end: r.end, driverId: S.driver, focus: S.focus };
+  }
+  function optsKey() { var o = opts(); return o.start + '|' + o.end + '|' + o.driverId + '|' + o.focus; }
+
+  /* ================================================================== TRANSPORT
+     Inside the Apps Script web app -> google.script.run.
+     On GitHub Pages -> fetch against TAXI_CFG.apiUrl.
+     Nowhere -> a visible error. There is no demo data in this build; a portal that
+     invents plausible figures when it cannot reach the sheet is worse than one that
+     refuses to draw, because you cannot tell the difference until you have acted on it.
+     ========================================================================= */
+  var live = !!(typeof google !== 'undefined' && google.script && google.script.run);
+
+  function callOnce(fn, args, ok, fail) {
+    if (live) {
+      var r = google.script.run.withSuccessHandler(ok).withFailureHandler(fail);
+      r[fn].apply(r, args);
+      return;
+    }
+    if (!API) {
+      fail(new Error('No Apps Script URL is configured. Set TAXI_CFG.apiUrl in index.html.'));
+      return;
+    }
+    var done = false, ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var timer = setTimeout(function () {
+      if (done) return;
+      done = true;
+      if (ctrl) { try { ctrl.abort(); } catch (e) {} }
+      fail(new Error('The sheet did not answer within ' + (REQ_TIMEOUT / 1000) + ' seconds.'));
+    }, REQ_TIMEOUT);
+    var url = API + (API.indexOf('?') >= 0 ? '&' : '?') + 'fn=' + encodeURIComponent(fn) +
+      '&args=' + encodeURIComponent(JSON.stringify(args)) + '&_=' + Date.now();
+    fetch(url, { method: 'GET', redirect: 'follow', cache: 'no-store',
+                 signal: ctrl ? ctrl.signal : undefined })
+      .then(function (res) {
+        if (!res.ok) throw new Error('The sheet replied HTTP ' + res.status + '.');
+        return res.text();
+      })
+      .then(function (txt) {
+        var d;
+        try { d = JSON.parse(txt); }
+        catch (e) {
+          // Apps Script serves an HTML sign-in page when the deployment is private.
+          throw new Error(/<html/i.test(txt)
+            ? 'The deployment is not public. In Apps Script open Deploy > Manage ' +
+              'deployments > edit, and set "Who has access" to Anyone.'
+            : 'The sheet sent something that is not JSON.');
+        }
+        if (d && d.error) throw new Error(d.error);
+        if (done) return;
+        done = true; clearTimeout(timer); ok(d);
+      })
+      .catch(function (e) {
+        if (done) return;
+        done = true; clearTimeout(timer);
+        fail(e && e.name === 'AbortError'
+          ? new Error('The request timed out.')
+          : (e || new Error('Could not reach the sheet.')));
+      });
+  }
+
+  /* One automatic retry. The first call after an idle spell wakes a cold Apps Script
+     container and can lose the race with any timeout; retrying once turns that from a
+     visible failure into a slightly slow load. */
+  function call(fn, args, ok, fail) {
+    callOnce(fn, args, ok, function (e1) {
+      setTimeout(function () {
+        callOnce(fn, args, ok, function (e2) { fail(e2 || e1); });
+      }, 1200);
+    });
+  }
+
+  /* ---- payload cache, so opening the portal paints instantly ---- */
+  function cacheKey() { return 'taxisharm.cache.' + optsKey(); }
+  function cacheSave(d) {
+    try {
+      var slim = {};
+      Object.keys(d).forEach(function (k) { if (k !== 'trips') slim[k] = d[k]; });
+      slim._at = Date.now();
+      localStorage.setItem(cacheKey(), JSON.stringify(slim));
+    } catch (e) {}
+  }
+  function cacheLoad() {
+    try {
+      var raw = localStorage.getItem(cacheKey());
+      if (!raw) return null;
+      var d = JSON.parse(raw);
+      if (!d || !d._at || Date.now() - d._at > 86400000) return null;   // a day old is useless
+      return d;
+    } catch (e) { return null; }
+  }
+
+  window.__TAXI = { S: S, PAGES: PAGES, PAGEMAP: PAGEMAP, PRESETS: PRESETS, C: C, CSS: CSS,
+    ic: ic, fmt: fmt, fmtN: fmtN, pct: pct, int: int, esc: esc, iso: iso, fromIso: fromIso,
+    dm: dm, dow: dow, w: w, addD: addD, clock: clock, parseWeek: parseWeek, weekText: weekText,
+    isWorkDay: isWorkDay, nextWorkDay: nextWorkDay, prevWorkDay: prevWorkDay,
+    weekStart: weekStart, rangeFor: rangeFor, activeRange: activeRange, rangeLabel: rangeLabel,
+    rangeText: rangeText, opts: opts, optsKey: optsKey, call: call, cacheSave: cacheSave,
+    cacheLoad: cacheLoad, persist: persist, q: q, live: live, API: API, CFG: CFG,
+    SYNC_MS: SYNC_MS, MIN_GAP_MS: MIN_GAP_MS,
+    setRoot: function (el) { root = el; }, getRoot: function () { return root; } };
+})();
+/* ============================ PART 2 — CHROME AND PAGES ============================ */
+(function () {
+  'use strict';
+  var X = window.__TAXI;
+  var S = X.S, C = X.C, PAGES = X.PAGES, PAGEMAP = X.PAGEMAP, PRESETS = X.PRESETS;
+  var ic = X.ic, fmt = X.fmt, fmtN = X.fmtN, pct = X.pct, int = X.int, esc = X.esc;
+  var iso = X.iso, dm = X.dm, dow = X.dow, w = X.w, addD = X.addD, clock = X.clock;
+  var weekText = X.weekText, isWorkDay = X.isWorkDay, nextWorkDay = X.nextWorkDay;
+  var prevWorkDay = X.prevWorkDay, weekStart = X.weekStart;
+  var activeRange = X.activeRange, rangeFor = X.rangeFor, rangeLabel = X.rangeLabel;
+  var rangeText = X.rangeText, q = X.q;
+
+  function root() { return X.getRoot(); }
+  function K() { return (S.data && S.data.kpi) || {}; }
+  function settings() { return (S.data && S.data.settings) || {}; }
+  function achFee() { var s = settings(); return Number(s.ach !== undefined ? s.ach : 50) || 0; }
+  function minTransfer() { var s = settings(); return Number(s.minTransfer !== undefined ? s.minTransfer : 50) || 0; }
+
+  /* The pool comes from the ENGINE now. The old build worked it out on screen as "any day
+     that did not transfer", which counted a Friday twice once Sunday's wire swept it up. */
+  function pool() {
+    var p = (S.data && S.data.pool) || null;
+    if (p) return p;
+    var k = K();                                        /* engine older than v15 */
+    return { days: 0, links: 0, cash: 0, debt: 0, zedsShare: 0, zedsFee: 0, zedsTotal: 0,
+      enovShare: 0, enovFee: 0, enovTotal: 0, credit: 0,
+      ready: 0, pending: Number(k.pending || 0), blocked: 0,
+      total: Number(k.carried || 0) + Number(k.pending || 0),
+      achCharged: 0, achCost: null, achMargin: null, wire: 0, belowMinimum: false, dates: [] };
+  }
+  function poolRows() {
+    var d = S.data;
+    if (!d || !d.days) return [];
+    return d.days.filter(function (r) { return r.inPool; });
+  }
+  function nextTransferDay() { var t = iso(new Date()); return isWorkDay(t) ? t : nextWorkDay(t); }
+  function carriedFrom() {
+    var day = nextTransferDay(), out = [], stop = prevWorkDay(day), g = 0, cur = addD(day, -1);
+    while (cur > stop && g++ < 10) { out.push(cur); cur = addD(cur, -1); }
+    return out.reverse();
+  }
+  function landedPayments() {
+    var d = S.data;
+    if (!d || !d.payments) return [];
+    return d.payments.filter(function (p) { return p.landed; });
+  }
+  function driverIndex() {
+    var m = {};
+    ((S.data && S.data.drivers) || []).forEach(function (r) { m[r.id] = r; });
+    return m;
+  }
+  function badCount() {
+    var d = S.data;
+    if (!d) return 0;
+    var k = d.kpi || {};
+    return ((d.checks || []).filter(function (c) { return !c.pass; }).length) +
+      Number(k.badDate || 0) + Number(k.noRate || 0) + Number(k.badTrip || 0) +
+      Number(k.dupLinks || 0) + (Number(k.variance || 0) !== 0 ? 1 : 0);
+  }
+
+  /* ------------------------------------------------------------------ chrome */
+  function drawRail() {
+    var logo = X.CFG.logo || 'favicon-512x512.png';
+    var bad = badCount(), p = pool(), nd = nextTransferDay(), carry = carriedFrom();
+    var nav = PAGES.map(function (pg, i) {
+      var tail = (pg.k === 'recon' && bad) ? '<span class="cnt">' + bad + '</span>'
+        : '<span class="kb">' + (i + 1) + '</span>';
+      return '<a data-go="' + pg.k + '" class="' + (S.page === pg.k ? 'on' : '') + '">' +
+        ic(pg.ic) + '<span class="tx">' + pg.nav + '</span>' + tail + '</a>';
+    }).join('');
+    var note = 'on ' + dow(nd) + ' ' + dm(nd) +
+      (carry.length ? ' \u00b7 carries ' + carry.map(function (x) { return dow(x); }).join(' + ') : '') +
+      ' \u00b7 one ACH fee';
+    return '<aside class="rail">' +
+      '<button class="railBtn" data-act="rail" title="Collapse">' + ic('left') + '</button>' +
+      '<div class="brand"><span class="plate" data-act="home">' +
+      '<img src="' + esc(logo) + '" alt="Taxi Sharm"></span>' +
+      '<span class="wordmark"><b>Taxi Sharm</b><span>Settlement</span></span></div>' +
+      '<nav>' + nav + '</nav>' +
+      '<div class="railFoot" data-go="pool"><div class="l">Ready to send</div>' +
+      '<div class="v num">' + fmt(p.ready) + '</div><div class="n">' + esc(note) + '</div></div>' +
+      '</aside>';
+  }
+
+  function syncPill() {
+    var cls, txt;
+    if (S.busy) { cls = 'busy'; txt = 'Reading the sheet'; }
+    else if (S.err) { cls = 'err'; txt = 'Not connected'; }
+    else if (S.cached) { cls = 'stale'; txt = 'Cached'; }
+    else if (S.lastOk) { cls = 'live'; txt = 'Live \u00b7 ' + clock(S.lastOk); }
+    else { cls = 'busy'; txt = 'Connecting'; }
+    return '<button class="sync ' + cls + '" data-act="refresh" title="Refresh now">' +
+      '<i></i>' + esc(txt) + '</button>';
+  }
+
+  function headerControls(p) {
+    var h = '', d = S.data || {};
+    if (p.k === 'today') {
+      var day = (d.focus && d.focus.date) || iso(new Date());
+      h += '<div style="display:flex;gap:6px;align-items:center">' +
+        '<button class="btn btn-ghost" data-act="dayprev" title="Previous day">' + ic('left') + '</button>' +
+        '<button class="rangebtn" data-act="dayreset"><span class="rl"><b>' +
+        esc(dow(day) + ' ' + dm(day)) + '</b><i>' +
+        (day === iso(new Date()) ? 'Today' : 'Selected day') + '</i></span></button>' +
+        '<button class="btn btn-ghost" data-act="daynext" title="Next day">' + ic('right') + '</button></div>';
+    } else if (p.dated) {
+      var cfg = S.rng[p.k];
+      h += '<div class="rangebox"><button class="rangebtn' + (S.pop ? ' act' : '') + '" data-act="pop">' +
+        ic('cal') + '<span class="rl"><b>' + esc(rangeText()) + '</b><i>' + esc(rangeLabel()) +
+        '</i></span>' + ic('down') + '</button>' +
+        (S.pop ? '<div class="pop">' + PRESETS.map(function (x2) {
+          var r = rangeFor(x2[0]);
+          return '<div class="opt' + (cfg.preset === x2[0] ? ' on' : '') + '" data-preset="' + x2[0] + '">' +
+            esc(x2[1]) + '<span>' +
+            (r.start === r.end ? dm(r.start) : dm(r.start) + ' \u2013 ' + dm(r.end)) + '</span></div>';
+        }).join('') + '<div class="cust"><input type="date" value="' + esc(activeRange().start) +
+        '" data-date="start"><span style="color:' + C.muted + '">\u2192</span>' +
+        '<input type="date" value="' + esc(activeRange().end) + '" data-date="end"></div></div>' : '') +
+        '</div>';
+    } else {
+      h += '<span class="pill">' + ic(p.ic) + (p.k === 'drivers' ? 'As of today' : 'Whole book') + '</span>';
+    }
+    if (S.driver !== 'all') {
+      h += '<button class="chip on" data-act="cleardriver">' + esc(S.driver) + ' \u2715</button>';
+    }
+    h += syncPill();
+    h += '<button class="btn btn-accent" data-act="export">' + ic('exp') + 'Export</button>';
+    return h;
+  }
+
+  function headerSub(p) {
+    var d = S.data, k = K();
+    if (!d) return p.sub;
+    if (p.k === 'pool') {
+      var pl = pool();
+      return fmt(pl.cash) + ' EGP of link cash is held across ' + int(pl.days) +
+        ' day(s); ' + fmt(pl.total) + ' of it is owed to eNovate. Next transfer day is ' +
+        dow(nextTransferDay()) + ' ' + dm(nextTransferDay()) + '.';
+    }
+    if (p.k === 'revenue') {
+      var rv = d.revenue;
+      return rv ? "Zed's earned " + fmt(rv.earned.debt.zeds) + ' of the ' +
+        fmt(rv.earned.debt.total) + ' driver debt in this range \u00b7 eNovate ' +
+        fmt(rv.earned.debt.enov + rv.earned.debt.ssg + rv.earned.debt.traffic) + '.'
+        : 'The engine on this deployment is older than v15 and does not send the split yet.';
+    }
+    if (p.k === 'drivers') {
+      return int((d.drivers || []).length) + ' drivers \u00b7 ' + fmt(k.outstanding) +
+        ' outstanding \u00b7 ' + int(k.blocked) + ' blocked.';
+    }
+    if (p.k === 'links') {
+      var l = d.payments || [], landed = l.filter(function (x2) { return x2.landed; }).length;
+      return int(l.length) + ' paid links in range \u00b7 ' + landed + ' in the bank \u00b7 ' +
+        (l.length - landed) + ' in transit.';
+    }
+    if (p.k === 'remit') {
+      var lp = landedPayments();
+      return int(lp.length) + ' payments landed in range \u00b7 eNovate share ' +
+        fmt(k.enovRel) + ' + fees ' + fmt(k.enovFees) + '.';
+    }
+    if (p.k === 'history') {
+      return int((d.days || []).length) + ' days \u00b7 ' + int(k.transfers || 0) +
+        ' transfers sent \u00b7 ' + fmt(k.transferred) + ' to eNovate.';
+    }
+    if (p.k === 'recon') {
+      var bad = (d.checks || []).filter(function (c) { return !c.pass; }).length;
+      return bad ? bad + ' identity check(s) failing \u2014 do not transfer until they close at 0.00.'
+        : 'All ' + (d.checks || []).length + ' identities close at 0.00.';
+    }
+    if (p.k === 'today') {
+      var f = d.focus;
+      if (!f) return p.sub;
+      return (f.isToday ? 'Today, ' : '') + dow(f.date) + ' ' + dm(f.date) +
+        (isWorkDay(f.date) ? ' is a working day \u2014 a transfer can go out.'
+          : ' is not a working day \u2014 its cash carries to ' + dow(nextWorkDay(f.date)) +
+            ' ' + dm(nextWorkDay(f.date)) + '.');
+    }
+    return p.sub;
+  }
+
+  function drawHeader() {
+    var p = PAGEMAP[S.page], el = q('hdr');
+    if (!el) return;
+    el.innerHTML = '<div class="ht"><div class="eyebrow">' + esc(p.eb) + '</div><h1>' +
+      esc(p.t) + '</h1><p class="sub">' + esc(headerSub(p)) + '</p></div>' +
+      '<div class="hr">' + headerControls(p) + '</div>';
+  }
+
+  /* ------------------------------------------------------------------ bits */
+  function panel(title, inner, note) {
+    return '<section class="panel"><h2>' + esc(title) +
+      (note ? '<em>' + esc(note) + '</em>' : '') + '</h2>' + inner + '</section>';
+  }
+  function empty(title, msg) {
+    return '<section class="panel"><h2>' + esc(title) +
+      '</h2><div class="loading" style="padding:26px">' + esc(msg) + '</div></section>';
+  }
+  function noteLine(txt) { return '<p class="note">' + ic('info') + '<span>' + txt + '</span></p>'; }
+  function th(label, right) {
+    return '<th class="s' + (right ? ' right' : '') + '" data-sort="1">' + label + '</th>';
+  }
+  function tools(inputId, tableId, placeholder, chips) {
+    var c = (chips || []).map(function (x2, i) {
+      return '<button class="chip' + (i === 0 ? ' on' : '') + '" data-chip="' + esc(x2[1]) +
+        '" data-table="' + tableId + '">' + esc(x2[0]) + '</button>';
+    }).join('');
+    return '<div class="tools"><div class="search">' + ic('find') + '<input id="' + inputId +
+      '" type="search" placeholder="' + esc(placeholder) + '" data-table="' + tableId +
+      '"></div>' + c + '<span class="hits" id="hits-' + tableId + '"></span></div>';
+  }
+  function acc(id, title, tag, tagCls, inner) {
+    return '<details class="acc" id="' + id + '"' + (S.open[id] ? ' open' : '') +
+      '><summary>' + esc(title) + '<span class="tag ' + tagCls + '">' + esc(tag) +
+      '</span><span class="caret">' + ic('down') + '</span></summary><div class="in">' +
+      inner + '</div></details>';
+  }
+  function legend(defs) {
+    return '<p class="lg">' + defs.map(function (d) {
+      return '<b><i style="background:' + d[2] + '"></i>' + esc(d[1]) + '</b>';
+    }).join('') + '</p>';
+  }
+  function niceMax(v) {
+    if (!(v > 0)) return 1;
+    var p = Math.pow(10, Math.floor(Math.log10(v))), n = v / p;
+    return (n <= 1 ? 1 : (n <= 2 ? 2 : (n <= 2.5 ? 2.5 : (n <= 5 ? 5 : 10)))) * p;
+  }
+  function barChart(rows, defs) {
+    var W = 760, H = 232, L = 56, R = 12, T = 12, B = 32;
+    var iw = W - L - R, ih = H - T - B, max = 0;
+    rows.forEach(function (r) {
+      defs.forEach(function (d) { max = Math.max(max, Math.abs(Number(r[d[0]]) || 0)); });
+    });
+    var top = niceMax(max);
+    var lab = top >= 100000
+      ? function (v) { return Math.round(v / 1000).toLocaleString('en-US') + 'k'; }
+      : function (v) { return Math.round(v).toLocaleString('en-US'); };
+    var gw = iw / rows.length, bw = Math.max(5, Math.min(16, (gw - 8) / defs.length));
+    var span = bw * defs.length + (defs.length - 1) * 2, grid = '';
+    [0, .25, .5, .75, 1].forEach(function (f) {
+      var yy = T + ih - f * ih;
+      grid += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + yy.toFixed(1) + '" y2="' +
+        yy.toFixed(1) + '" stroke="' + (f === 0 ? C.line : C.grid) + '" stroke-width="1"/>' +
+        '<text x="' + (L - 9) + '" y="' + (yy + 3.4).toFixed(1) + '" text-anchor="end" ' +
+        'font-size="9.5" fill="' + C.muted + '" font-family="IBM Plex Mono,monospace">' +
+        lab(top * f) + '</text>';
+    });
+    var bars = rows.map(function (r, i) {
+      var x0 = L + i * gw + gw / 2 - span / 2;
+      return defs.map(function (d, j) {
+        var v = Number(r[d[0]]) || 0, hh = Math.max((Math.abs(v) / top) * ih, v > 0 ? 1.5 : 0);
+        return '<rect x="' + (x0 + j * (bw + 2)).toFixed(1) + '" y="' + (T + ih - hh).toFixed(1) +
+          '" width="' + bw.toFixed(1) + '" height="' + hh.toFixed(1) + '" rx="2.5" fill="' +
+          d[2] + '"><title>' + esc(r.date) + ' \u00b7 ' + esc(d[1]) + ' ' + fmt(v) +
+          '</title></rect>';
+      }).join('');
+    }).join('');
+    var every = rows.length > 10 ? Math.ceil(rows.length / 9) : 1;
+    var xlab = rows.map(function (r, i) {
+      return i % every ? '' : '<text x="' + (L + i * gw + gw / 2).toFixed(1) + '" y="' +
+        (T + ih + 17) + '" text-anchor="middle" font-size="9.5" fill="' + C.muted +
+        '" font-family="IBM Plex Mono,monospace">' + esc(dm(r.date)) + '</text>';
+    }).join('');
+    return '<div class="cw"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img">' +
+      grid + bars + xlab + '</svg></div>';
+  }
+  function weekStrip() {
+    var t = iso(new Date()), ws = weekStart(t), days = [], i;
+    for (i = 0; i < 7; i++) days.push(addD(ws, i));
+    var byDay = {};
+    ((S.data && S.data.days) || []).forEach(function (r) { byDay[r.date] = r; });
+    return panel('This work week', '<div class="wk">' + days.map(function (x2) {
+      var r = byDay[x2], work = isWorkDay(x2);
+      var cl = (work ? 'pay' : 'off') + (x2 === t ? ' today' : '');
+      var v = r ? (Number(r.net) > 0 ? fmt(r.net)
+        : (Number(r.enov) + Number(r.fees) > 0 ? '\u00b7' : '\u2014')) : '\u2014';
+      return '<div class="' + cl + '" title="' +
+        esc(x2 + (work ? ' \u2014 working day' : ' \u2014 no transfer')) + '">' +
+        '<div class="d">' + dow(x2) + '</div><div class="m">' + v + '</div></div>';
+    }).join('') + '</div>' +
+      noteLine('Working week: <b>' + esc(weekText(S.week)) + '</b>. Friday and Saturday cash ' +
+        'is collected but carried \u2014 it leaves with Sunday\u2019s single transfer, so one ' +
+        fmt(achFee()) + ' bank charge is paid, not three.'));
+  }
+  function trend(d) {
+    var s = (d.series || []).slice(-21);
+    if (!s.length) return '';
+    var defs = [['gross', 'Rider fares', C.tealBright], ['matched', 'Collected', C.navy],
+      ['net', 'Sent to eNovate', C.tealDeep]];
+    return panel('Day by day', legend(defs) + barChart(s, defs));
+  }
+
+  /* ------------------------------------------------------------------ TODAY */
+  function pgToday(d) {
+    var t = d.focus;
+    if (!t) return empty('Today', 'Nothing on this day.');
+    var work = isWorkDay(t.date), cls, st;
+    if (!t.hasRow && Number(t.pending) === 0) { cls = 'hold'; st = 'No paid link landed on this day.'; }
+    else if (!t.confirmed) {
+      cls = 'hold';
+      st = 'Type the bank deposit below \u2014 ' + fmt(t.pending) + ' is waiting on it.';
+    } else if (Number(t.variance) !== 0) {
+      cls = 'stop';
+      st = 'The deposit is off by ' + fmt(t.variance) + '. Fix it before sending anything.';
+    } else if (!work) {
+      cls = 'hold';
+      st = dow(t.date) + ' is not a working day. This money leaves on ' +
+        dow(nextWorkDay(t.date)) + ' ' + dm(nextWorkDay(t.date)) + ', with one ACH fee.';
+    } else if (Number(t.net) === 0) {
+      cls = 'hold';
+      st = 'Under the ' + fmt(minTransfer()) + ' minimum after the ' + fmt(achFee()) +
+        ' charge. It stays in the pool.';
+    } else if (t.loggedAt) { cls = 'go'; st = 'Already sent \u00b7 ' + esc(t.ref); }
+    else { cls = 'go'; st = 'Clear to send.'; }
+
+    var lines = [['Trips', int(t.trips), 0], ['Rider fares', fmt(t.gross), 0],
+      ['Debt earned', fmt(t.debt), 1],
+      ['In the bank', fmt(t.deposit), 0], ['Collected from drivers', fmt(t.matched), 0],
+      ['Driver credit', fmt(t.credit), 1],
+      ["ZED'S COMMISSION", fmt(t.zeds), 0], ["ZED'S LINK FEE", fmt(t.zedsFee), 0],
+      ["ZED'S REVENUE", fmt(t.kept), 1],
+      ['eNovate share', fmt(t.enov), 0], ['eNovate link fee', fmt(t.fees), 0],
+      ['ACH charged to eNovate', '\u2212 ' + fmt(t.ach), 0]];
+
+    var ticket = '<section class="ticket"><div class="stub">' +
+      '<div class="eb">' + (t.isToday ? 'Today' : 'Selected day') + ' \u00b7 ' +
+      esc(dow(t.date) + ' ' + t.date) + '</div>' +
+      '<div class="amt num">' + fmt(t.net) + '<sup>EGP</sup></div>' +
+      '<div class="st ' + cls + '">' + ic(cls === 'go' ? 'tick' : 'bang') + '<span>' + st +
+      '</span></div><div class="acts">' +
+      (Number(t.net) > 0 ? '<button class="btn btn-accent" data-act="copy" data-v="' +
+        Number(t.net).toFixed(2) + '">' + ic('copy') + 'Copy amount</button>' : '') +
+      '<button class="btn btn-ghost" data-go="pool">' + ic('pool') + 'Open the pool</button>' +
+      '</div></div><div class="side"><div class="eb" style="color:#8DBABC">How it adds up</div>' +
+      '<div class="meter" style="margin-top:10px">' + lines.map(function (l) {
+        return '<div class="ln' + (l[2] ? ' gap' : '') + '"><span class="k">' + l[0] +
+          '</span><span class="v num">' + l[1] + '</span></div>';
+      }).join('') + '<div class="ln key"><span class="k">Send to eNovate</span>' +
+      '<span class="v num">' + fmt(t.net) + '</span></div></div></div></section>';
+
+    var okDep = t.confirmed && Number(t.variance) === 0;
+    var settle = panel('Match the bank \u00b7 ' + t.date,
+      '<div class="frm"><div class="fld"><label>Bank deposit \u00b7 expected ' +
+      fmt(t.expected) + '</label><input id="depAmt" type="number" step="0.01" ' +
+      'inputmode="decimal" placeholder="' + fmt(t.expected) + '" value="' +
+      (t.confirmed ? Number(t.deposit).toFixed(2) : '') + '"></div>' +
+      '<button class="btn btn-primary" data-act="savedep" data-day="' + esc(t.date) + '"' +
+      (S.busy ? ' disabled' : '') + '>Save deposit</button>' +
+      '<button class="btn btn-ghost" data-act="useexp" data-v="' +
+      Number(t.expected).toFixed(2) + '">Use expected</button>' +
+      (t.confirmed ? '<span class="tag ' + (okDep ? 'ok' : 'no') +
+        '" style="height:37px;display:inline-flex;align-items:center">' +
+        (okDep ? 'Variance 0.00' : 'Off by ' + fmt(t.variance)) + '</span>' : '') + '</div>' +
+      (t.canSend ? '<div class="frm" style="margin-top:14px;padding-top:14px;border-top:1px dashed ' +
+        C.line + '"><div class="fld"><label>Amount actually sent \u00b7 suggested ' +
+        fmt(t.net) + '</label><input id="trAmt" type="number" step="0.01" inputmode="decimal" ' +
+        'value="' + Number(t.net).toFixed(2) + '"></div>' +
+        '<div class="fld"><label>Bank reference</label><input id="trRef" type="text" ' +
+        'placeholder="ACH-' + t.date.replace(/-/g, '') + '-01" value="' + esc(t.ref || '') +
+        '"></div><button class="btn btn-primary" data-act="logtr" data-day="' + esc(t.date) +
+        '" data-net="' + Number(t.net).toFixed(2) + '"' + (S.busy ? ' disabled' : '') + '>' +
+        ic('send') + 'Confirm &amp; log</button></div>' : '') +
+      (Number(t.net) > 0 ? '<div class="frm" style="margin-top:14px;padding-top:14px;' +
+        'border-top:1px dashed ' + C.line + '"><div class="fld">' +
+        '<label>What the bank actually charged \u00b7 optional</label>' +
+        '<input id="achCost" type="number" step="0.01" inputmode="decimal" placeholder="' +
+        (t.achCost === null || t.achCost === undefined ? 'from the tariff band'
+          : Number(t.achCost).toFixed(2)) + '" value="' +
+        (t.achCostTyped ? Number(t.achCost).toFixed(2) : '') + '"></div>' +
+        '<button class="btn btn-ghost" data-act="saveach" data-day="' + esc(t.date) + '"' +
+        (S.busy ? ' disabled' : '') + '>Save bank charge</button>' +
+        '<span class="pill">Margin ' + fmtN(t.achMargin) + '</span></div>' +
+        noteLine('The <b>50.00 charged to eNovate</b> and <b>what the bank takes from ' +
+          'Zed\u2019s</b> are two different numbers. Typing the real charge here beats the ' +
+          'tariff band, because the statement is the fact and the band is only an estimate.')
+        : '') +
+      noteLine('Paymob deposits the <b>link amounts</b> (debt + ' +
+        fmt(settings().linkFee || 1.5) + ' per link), not the bare debt. That is why the ' +
+        'expected figure is higher than what the drivers owed.'));
+
+    return ticket + '<div class="g2">' + settle + weekStrip() + '</div>' + trend(d);
+  }
+
+  /* ------------------------------------------------------------------ POOL */
+  function pgPool(d) {
+    var p = pool(), nd = nextTransferDay(), carry = carriedFrom();
+    var segs = [[p.ready, C.tealDeep, 'Confirmed \u00b7 ready'],
+      [p.pending, C.orange, 'Waiting on a bank deposit'],
+      [p.blocked, C.red, 'Held by a variance']];
+
+    var card = '<section class="poolcard"><div>' +
+      '<div style="font-size:8.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;' +
+      'color:' + C.teal + '">Link cash landed, not yet sent</div>' +
+      '<div class="big num">' + fmt(p.cash) + '<sup>EGP</sup></div>' +
+      '<div class="keys" style="margin-top:14px">' +
+      '<div><i style="background:' + C.navy + '"></i>Driver debt <b>' + fmt(p.debt) + '</b></div>' +
+      '<div><i style="background:' + C.tealBright + '"></i>Link fees <b>' +
+      fmt(Number(p.zedsFee) + Number(p.enovFee)) + '</b></div>' +
+      '<div><i style="background:' + C.muted + '"></i>Driver credit <b>' + fmt(p.credit) + '</b></div>' +
+      '</div><div class="keys" style="margin-top:6px">' +
+      '<div><i style="background:' + C.sand + '"></i>Zed\u2019s side <b>' + fmt(p.zedsTotal) +
+      '</b></div><div><i style="background:' + C.teal + '"></i>eNovate side <b>' +
+      fmt(p.enovTotal) + '</b></div></div></div>' +
+      '<div><div style="font-size:8.5px;font-weight:700;letter-spacing:.16em;' +
+      'text-transform:uppercase;color:' + C.teal + ';margin-bottom:7px">Owed out of it</div>' +
+      '<div class="bar">' + segs.map(function (x2) {
+        return '<i style="width:' + w(x2[0], p.total || 1) + ';background:' + x2[1] + '"></i>';
+      }).join('') + '</div><div class="keys">' + segs.map(function (x2) {
+        return '<div><i style="background:' + x2[1] + '"></i>' + x2[2] + ' <b>' + fmt(x2[0]) +
+          '</b></div>';
+      }).join('') + '</div>' +
+      '<div class="nextbox" style="margin-top:14px">' +
+      '<div class="eb" style="color:' + C.teal + '">Next transfer \u00b7 ' +
+      esc(dow(nd) + ' ' + dm(nd)) + '</div>' +
+      '<div class="row"><span class="k">Confirmed and ready</span><span class="v num">' +
+      fmt(p.ready) + '</span></div>' +
+      '<div class="row"><span class="k">ACH charged to eNovate \u00b7 one per transfer</span>' +
+      '<span class="v num">\u2212 ' + fmt(p.achCharged) + '</span></div>' +
+      '<div class="row tot"><span class="k">Leaves the account</span><span class="v num">' +
+      fmt(p.wire) + '</span></div>' +
+      '<div class="row" style="color:' + C.muted + '"><span class="k">Bank will take</span>' +
+      '<span class="v num">' + fmtN(p.achCost) + '</span></div>' +
+      '<div class="row" style="color:' + C.muted + '"><span class="k">Zed\u2019s ACH margin</span>' +
+      '<span class="v num">' + fmtN(p.achMargin) + '</span></div>' +
+      (p.belowMinimum ? '<p class="note" style="margin-top:9px">' + ic('bang') +
+        '<span>Below the ' + fmt(minTransfer()) + ' minimum after the charge \u2014 it waits ' +
+        'for the next day rather than burning a fee on a few piasters.</span></p>' : '') +
+      (carry.length ? '<p class="note" style="margin-top:9px">' + ic('info') + '<span>Includes ' +
+        carry.map(function (x2) { return dow(x2) + ' ' + dm(x2); }).join(' and ') +
+        ' \u2014 non-working days, so their cash rides along on one fee.</span></p>' : '') +
+      '<div class="acts" style="margin-top:12px">' +
+      (p.wire > 0 ? '<button class="btn btn-accent" data-act="copy" data-v="' +
+        Number(p.wire).toFixed(2) + '">' + ic('copy') + 'Copy ' + fmt(p.wire) + '</button>' : '') +
+      '<button class="btn btn-primary" data-act="gotoday" data-day="' + esc(nd) + '">' +
+      ic('send') + 'Settle ' + dow(nd) + '</button></div></div></div></section>';
+
+    var rows = poolRows();
+    var why = { variance: ['Deposit does not match the links \u2014 held back', 'bad'],
+      deposit: ['No bank deposit saved yet', 'wait'],
+      nonworking: ['Non-working day \u2014 waits for the next working day', 'mute'],
+      minimum: ['Below the minimum after the charge', 'wait'] };
+    var tbl = rows.length ? '<div class="scroll list"><table class="data"><thead><tr>' +
+      th('Day') + th('Working day') + th('Links', 1) + th('Link cash', 1) + th('Bank deposit', 1) +
+      th('Variance', 1) + th("Zed's side", 1) + th('eNovate held', 1) + th('Why it is still here') +
+      '</tr></thead><tbody>' + rows.map(function (r) {
+        var wr = why[r.poolReason] || ['Held', 'wait'], work = isWorkDay(r.date);
+        return '<tr><td class="num"><a class="lk" data-act="gotoday" data-day="' + esc(r.date) +
+          '" style="color:' + C.tealDeep + ';font-weight:600">' + esc(r.date) + '</a></td>' +
+          '<td>' + dow(r.date) + (work ? '' : ' <span class="bdg mute">off</span>') + '</td>' +
+          '<td class="right num">' + int(r.links) + '</td>' +
+          '<td class="right num">' + fmt(r.expected) + '</td>' +
+          '<td class="right num">' + (r.confirmed ? fmt(r.deposit) : '\u2014') + '</td>' +
+          '<td class="right num" style="font-weight:600;color:' +
+          (r.confirmed && Number(r.variance) !== 0 ? C.bad : C.ok) + '">' +
+          (r.confirmed ? fmt(r.variance) : '\u2014') + '</td>' +
+          '<td class="right num" style="color:' + C.muted + '">' + fmt(r.kept) + '</td>' +
+          '<td class="right num" style="font-weight:600">' + fmt(r.entitlement) + '</td>' +
+          '<td><span class="bdg ' + wr[1] + '">' + esc(wr[0]) + '</span></td></tr>';
+      }).join('') + '</tbody></table></div>'
+      : '<div class="loading" style="padding:24px">Nothing is being held. Every confirmed day ' +
+        'has been settled.</div>';
+
+    return card + panel('Days still holding money', tbl, rows.length + ' day(s)') +
+      '<div class="g2">' + panel('How the pool is worked out',
+        '<div class="scroll"><table class="data"><tbody>' +
+        [['Link cash landed on unsettled days', p.cash, 1],
+         ['\u00b7 driver debt collected', p.debt, 0],
+         ["\u00b7 Zed's half of the link fees", p.zedsFee, 0],
+         ['\u00b7 eNovate half of the link fees', p.enovFee, 0],
+         ['\u00b7 driver credit held', p.credit, 0],
+         ["Zed's side \u2014 stays in the account", p.zedsTotal, 1],
+         ['eNovate side \u2014 goes out', p.enovTotal, 1]].map(function (r) {
+          return '<tr' + (r[2] ? '' : ' class="dim"') + '><td' +
+            (r[2] ? ' style="font-weight:600"' : ' style="padding-left:12px"') + '>' +
+            esc(r[0]) + '</td><td class="right num"' + (r[2] ? ' style="font-weight:600"' : '') +
+            '>' + fmt(r[1]) + '</td></tr>';
+        }).join('') + '</tbody></table></div>' +
+        noteLine('A day leaves the pool the moment a later working day wires, because the ' +
+          'transfer is always <b>cumulative entitlement \u2212 already sent</b>. That is why a ' +
+          'Friday with no transfer of its own is not listed here once Sunday has gone out ' +
+          '\u2014 its money left inside Sunday\u2019s single wire.')) +
+      weekStrip() + '</div>';
+  }
+
+  /* ------------------------------------------------------------------ REVENUE */
+  function pgRevenue(d) {
+    var rv = d.revenue;
+    if (!rv) {
+      return empty('Revenue split',
+        'This Apps Script deployment is running an engine older than v15, which does not ' +
+        'send the revenue split. Paste TaxiSharm_v15.gs and publish a NEW VERSION of the ' +
+        'deployment.');
+    }
+    var e = rv.earned, lk = rv.links, bk = rv.bank;
+    var row = function (label, o, bold) {
+      return '<tr' + (bold ? ' class="tot"' : '') + '><td' +
+        (bold ? ' style="font-weight:600"' : '') + '>' + esc(label) + '</td>' +
+        ['total', 'ssg', 'traffic', 'enov', 'zeds'].map(function (k2) {
+          var v = o[k2];
+          return '<td class="right num"' +
+            (k2 === 'zeds' ? ' style="font-weight:600;color:' + C.tealDeep + '"' : '') + '>' +
+            (v === 0 && k2 !== 'total' ? '\u2014' : fmt(v)) + '</td>';
+        }).join('') + '</tr>';
+    };
+    var earned = panel('Earned from trips \u2014 the driver debt',
+      '<div class="scroll"><table class="data"><thead><tr>' + th('Component') +
+      th('Total', 1) + th('SSG', 1) + th('Traffic Dept', 1) + th('eNovate own', 1) +
+      th("Zed's", 1) + '</tr></thead><tbody>' +
+      row('Service commission', e.commission) +
+      row('Fixed platform fee', e.fixed) +
+      row('VAT (on the eNovate slice only)', e.vat) +
+      row('DRIVER DEBT', e.debt, 1) +
+      '</tbody></table></div>' +
+      noteLine('The party columns are exact \u2014 they are built with largest-remainder ' +
+        'rounding against the already-rounded totals, so they always add back. The Total ' +
+        'column is the rate card applied to the fares, so across many trips it can sit a few ' +
+        'piasters from the sum of the party columns. That is rounding in the reporting, not a ' +
+        'difference in money. <b>SSG and the Traffic Department are inside the eNovate ' +
+        'amount and are never a separate transfer.</b>'));
+
+    var collected = panel('Collected on the payment links',
+      '<div class="scroll"><table class="data"><thead><tr>' + th('Line') + th('Total', 1) +
+      th('eNovate', 1) + th("Zed's", 1) + '</tr></thead><tbody>' +
+      [['Share of the collected debt', lk.collectedDebt, lk.collectedEnov, lk.collectedZeds, 0],
+       ['Link fee added to each link (' + fmt(settings().linkFee || 1.5) + ')', lk.total, lk.enov, lk.zeds, 0],
+       ['TOTAL FROM THE LINKS', Number(lk.collectedDebt) + Number(lk.total),
+        Number(lk.collectedEnov) + Number(lk.enov), Number(lk.collectedZeds) + Number(lk.zeds), 1]]
+        .map(function (r) {
+          return '<tr' + (r[4] ? ' class="tot"' : '') + '><td' +
+            (r[4] ? ' style="font-weight:600"' : '') + '>' + esc(r[0]) + '</td>' +
+            '<td class="right num">' + fmt(r[1]) + '</td>' +
+            '<td class="right num">' + fmt(r[2]) + '</td>' +
+            '<td class="right num" style="font-weight:600;color:' + C.tealDeep + '">' +
+            fmt(r[3]) + '</td></tr>';
+        }).join('') + '</tbody></table></div>');
+
+    var bank = panel('The bank \u2014 charged against cost',
+      '<div class="scroll"><table class="data"><tbody>' +
+      [['ACH charged to eNovate', fmt(bk.charged), C.ink],
+       ['ACH actually paid to the bank', fmtN(bk.cost), C.ink],
+       ['ACH MARGIN', fmtN(bk.margin), C.tealDeep]].map(function (r, i) {
+        return '<tr' + (i === 2 ? ' class="tot"' : '') + '><td' +
+          (i === 2 ? ' style="font-weight:600"' : '') + '>' + esc(r[0]) + '</td>' +
+          '<td class="right num" style="font-weight:600;color:' + r[2] + '">' + r[1] +
+          '</td></tr>';
+      }).join('') + '</tbody></table></div>' +
+      (bk.unknown ? '<div class="alert warn" style="margin-top:12px">' + int(bk.unknown) +
+        ' transfer(s) in this range have no bank tariff band, so the cost reads "not known" ' +
+        'and the margin is left blank rather than assumed to be zero. Fill in the BANK ACH ' +
+        'COST block on Control &amp; Checks, or type the real charge on the Today page.</div>'
+        : noteLine('Every transfer in this range is priced against the tariff bands or a ' +
+          'figure typed off the statement.')));
+
+    var k = K();
+    var strip = '<div class="strip">' +
+      [["Zed's commission", fmt(k.zedsRel), 'on collected cash'],
+       ["Zed's link fees", fmt(k.zedsFees), '0.75 per link'],
+       ["Zed's ACH margin", fmtN(k.zedsAchMargin), 'charged minus cost'],
+       ["ZED'S TOTAL REVENUE", fmt(k.zedsGrand), 'in this range'],
+       ['eNovate entitlement', fmt(k.enovEnt), 'from landed cash'],
+       ['Transferred', fmt(k.transferred), int(k.transfers || 0) + ' transfers']]
+        .map(function (c) {
+          return '<div><div class="l">' + esc(c[0]) + '</div><div class="v num">' + c[1] +
+            '</div><div class="n">' + esc(c[2]) + '</div></div>';
+        }).join('') + '</div>';
+
+    return strip + earned + '<div class="g2">' + collected + bank + '</div>';
+  }
+
+  /* ------------------------------------------------------------------ HISTORY */
+  function pgHistory(d) {
+    var k = K();
+    var strip = '<div class="strip">' +
+      [['Trips', int(k.trips), ''], ['Rider fares', fmt(k.gross), 'EGP'],
+       ['Collected', fmt(k.matched), 'from drivers'],
+       ["Zed's revenue", fmt(k.zedsCash), 'retained'],
+       ['Sent to eNovate', fmt(k.transferred), int(k.transfers || 0) + ' transfers'],
+       ['ACH margin', fmtN(k.achMargin), 'charged minus cost']].map(function (c) {
+        return '<div><div class="l">' + esc(c[0]) + '</div><div class="v num">' + c[1] +
+          '</div><div class="n">' + esc(c[2]) + '</div></div>';
+      }).join('') + '</div>';
+    if (!d.days.length) return strip + empty('Settlement history', 'No settlement day in this range.');
+    var t = { dep: 0, x: 0, m: 0, kp: 0, e: 0, f: 0, a: 0, n: 0, mg: 0 };
+    var rows = d.days.map(function (r) {
+      t.dep += +r.deposit; t.x += +r.expected; t.m += +r.matched; t.kp += +r.kept;
+      t.e += +r.enov; t.f += +r.fees; t.a += +r.ach; t.n += +r.net;
+      t.mg += Number(r.achMargin || 0);
+      var sent = Number(r.net) > 0, work = isWorkDay(r.date);
+      var bd = sent ? 'good' : (r.confirmed ? (Number(r.variance) !== 0 ? 'bad' : 'wait') : 'wait');
+      return '<tr' + (work ? '' : ' class="dim"') + '><td class="num">' +
+        '<a class="lk" data-act="gotoday" data-day="' + esc(r.date) + '" style="color:' +
+        C.tealDeep + ';font-weight:600">' + esc(r.date) + '</a>' +
+        '<span style="color:' + C.muted + ';font-size:10.5px;margin-left:7px">' + dow(r.date) +
+        '</span></td>' +
+        '<td class="right num">' + (r.confirmed ? fmt(r.deposit) : '\u2014') + '</td>' +
+        '<td class="right num" style="color:' + C.muted + '">' + fmt(r.expected) + '</td>' +
+        '<td class="right num" style="font-weight:600;color:' +
+        (Number(r.variance) === 0 ? C.ok : C.bad) + '">' +
+        (r.confirmed ? fmt(r.variance) : '\u2014') + '</td>' +
+        '<td class="right num">' + fmt(r.matched) + '</td>' +
+        '<td class="right num" style="font-weight:600">' + fmt(r.kept) + '</td>' +
+        '<td class="right num" style="font-weight:600">' + fmt(r.enov) + '</td>' +
+        '<td class="right num" style="color:' + C.muted + '">' + fmt(r.fees) + '</td>' +
+        '<td class="right num">' + fmt(r.ach) + '</td>' +
+        '<td class="right num" style="color:' + C.muted + '">' + fmtN(r.achMargin) + '</td>' +
+        '<td class="right num" style="font-weight:600;color:' + C.tealDeep + '">' + fmt(r.net) + '</td>' +
+        '<td><span class="bdg ' + bd + '">' + esc(r.state) + '</span></td>' +
+        '<td class="num" style="color:' + C.muted + ';font-size:11px">' + esc(r.ref || '\u2014') +
+        '</td></tr>';
+    }).join('');
+    var tbl = '<div class="scroll list"><table class="data"><thead><tr>' +
+      th('Date') + th('In the bank', 1) + th('Expected', 1) + th('Variance', 1) +
+      th('Collected', 1) + th("Zed's revenue", 1) + th('eNovate', 1) + th('Their fee', 1) +
+      th('ACH charged', 1) + th('ACH margin', 1) + th('Sent', 1) + th('State') + th('Reference') +
+      '</tr></thead><tbody>' + rows +
+      '<tr class="tot"><td>TOTAL</td><td class="right num">' + fmt(t.dep) +
+      '</td><td class="right num">' + fmt(t.x) + '</td><td class="right num">' + fmt(t.dep - t.x) +
+      '</td><td class="right num">' + fmt(t.m) + '</td><td class="right num">' + fmt(t.kp) +
+      '</td><td class="right num">' + fmt(t.e) + '</td><td class="right num">' + fmt(t.f) +
+      '</td><td class="right num">' + fmt(t.a) + '</td><td class="right num">' + fmt(t.mg) +
+      '</td><td class="right num">' + fmt(t.n) + '</td><td></td><td></td></tr></tbody></table></div>';
+    return strip + panel('Settlement history', tbl, 'Click a date to settle that day') + trend(d);
+  }
+
+  /* ------------------------------------------------------------------ DRIVERS */
+  function pgDrivers(d) {
+    if (!d.drivers.length) return empty('Drivers', 'No drivers yet.');
+    var t = { tr: 0, e: 0, c: 0, o: 0, cr: 0, h: 0 };
+    var rows = d.drivers.map(function (r) {
+      t.tr += +r.trips; t.e += +r.earned; t.c += +r.collected; t.o += +r.outstanding;
+      t.cr += +r.credit; t.h += +r.held;
+      var cls = r.status === 'Blocked' ? 'bad' : (r.status === 'Owing' ? 'wait' : 'good');
+      return '<tr data-k="' + esc([r.id, r.name, r.phone || ''].join(' ').toLowerCase()) +
+        '" data-s="' + esc(r.status) + '">' +
+        '<td style="font-weight:500"><a class="lk" data-act="driver" data-v="' + esc(r.id) +
+        '">' + esc(r.name) + '</a><span class="num" style="color:' + C.muted +
+        ';font-size:10.5px;margin-left:8px">' + esc(r.id) + '</span></td>' +
+        '<td class="num" style="color:' + C.soft + '">' + esc(r.phone || '\u2014') + '</td>' +
+        '<td class="right num" style="color:' + C.soft + '">' + int(r.trips) + '</td>' +
+        '<td class="right num">' + fmt(r.earned) + '</td>' +
+        '<td class="right num">' + fmt(r.collected) + '</td>' +
+        '<td class="right num" style="font-weight:600;color:' +
+        (Number(r.outstanding) > 0 ? C.bad : C.ok) + '">' + fmt(r.outstanding) + '</td>' +
+        '<td class="right num">' + fmt(r.credit) + '</td>' +
+        '<td class="right num">' + fmt(r.held) + '</td>' +
+        '<td class="right"><span class="bdg ' + cls + '">' + esc(r.status) + '</span></td></tr>';
+    }).join('');
+    var n = function (s) { return d.drivers.filter(function (r) { return r.status === s; }).length; };
+    var tbl = panel('Drivers',
+      tools('drvSearch', 'tblDrivers', 'ID, name or mobile\u2026',
+        [['All ' + d.drivers.length, 'all'], ['Blocked ' + n('Blocked'), 'Blocked'],
+         ['Owing ' + n('Owing'), 'Owing'], ['Clear ' + n('Clear'), 'Clear']]) +
+      '<div class="scroll list"><table class="data" id="tblDrivers"><thead><tr>' +
+      th('Driver') + th('Mobile') + th('Trips', 1) + th('Debt earned', 1) + th('Collected', 1) +
+      th('Outstanding', 1) + th('Credit', 1) + th('Disputed', 1) + th('Status', 1) +
+      '</tr></thead><tbody>' + rows +
+      '<tr class="tot"><td>TOTAL</td><td></td><td class="right num">' + int(t.tr) +
+      '</td><td class="right num">' + fmt(t.e) + '</td><td class="right num">' + fmt(t.c) +
+      '</td><td class="right num">' + fmt(t.o) + '</td><td class="right num">' + fmt(t.cr) +
+      '</td><td class="right num">' + fmt(t.h) + '</td><td></td></tr></tbody></table></div>');
+    var top = d.drivers.slice(0, 8), max = 1;
+    top.forEach(function (r) { if (+r.outstanding > max) max = +r.outstanding; });
+    var bars = panel('Highest outstanding', top.map(function (r) {
+      var col = r.status === 'Blocked' ? C.red : (+r.outstanding > 0 ? C.orange : C.ok);
+      return '<div class="wf"><div class="lb">' + esc(r.name) + '</div><div class="tk">' +
+        '<div style="width:' + w(r.outstanding, max) + ';background:' + col + '"></div></div>' +
+        '<div class="vl">' + fmt(r.outstanding) + '</div></div>';
+    }).join(''));
+    return tbl + bars;
+  }
+
+  /* ------------------------------------------------------------------ LINKS */
+  function pgLinks(d) {
+    if (!d.payments.length) return empty('Payment links', 'No paid link in this range.');
+    var rows = d.payments.map(function (l) {
+      var ok = Math.abs((+l.zeds + +l.enov + +l.credit) - +l.link) < 0.005;
+      return '<tr data-k="' +
+        esc([l.id, l.driver, l.name || '', l.paid, l.deposit].join(' ').toLowerCase()) +
+        '" data-s="' + (l.landed ? 'Deposited' : 'In transit') + '">' +
+        '<td class="num">' + esc(l.id) + '</td>' +
+        '<td style="font-weight:500">' + esc(l.name || l.driver) + '</td>' +
+        '<td class="right num" style="color:' + C.soft + '">' + fmt(l.base) + '</td>' +
+        '<td class="right num" style="font-weight:600;color:' + C.tealDeep + '">' + fmt(l.link) + '</td>' +
+        '<td class="num">' + esc(l.paid) + '</td><td class="num">' + esc(l.deposit) + '</td>' +
+        '<td class="right num">' + fmt(l.zeds) + '</td>' +
+        '<td class="right num">' + fmt(l.enov) + '</td>' +
+        '<td class="right num">' + fmt(l.credit) + '</td>' +
+        '<td class="right" style="color:' + (ok ? C.ok : C.bad) + '">' + ic(ok ? 'tick' : 'bang') + '</td>' +
+        '<td class="right"><span class="bdg ' + (l.landed ? 'good' : 'wait') + '">' +
+        (l.landed ? 'In the bank' : 'In transit') + '</span></td></tr>';
+    }).join('');
+    var landed = d.payments.filter(function (x2) { return x2.landed; }).length;
+    return panel('Payment links',
+      tools('lnkSearch', 'tblLinks', 'Link, driver or date\u2026',
+        [['All ' + d.payments.length, 'all'], ['In the bank ' + landed, 'Deposited'],
+         ['In transit ' + (d.payments.length - landed), 'In transit']]) +
+      '<div class="scroll list"><table class="data" id="tblLinks"><thead><tr>' +
+      th('Link') + th('Driver') + th('Debt', 1) + th('Link amount', 1) + th('Paid') +
+      th('Deposit') + th("Zed's", 1) + th('eNovate', 1) + th('Credit', 1) + th('Foots', 1) +
+      th('State', 1) + '</tr></thead><tbody>' + rows + '</tbody></table></div>' +
+      noteLine('<b>Foots</b> is the row check: Zed\u2019s side + eNovate side + driver credit ' +
+        'must equal the link amount exactly. Paymob\u2019s own commission is charged to the ' +
+        'driver at checkout and never touches the account.'));
+  }
+
+  /* ------------------------------------------------------------------ REMIT */
+  function pgRemit(d) {
+    var lp = landedPayments(), idx = driverIndex(), k = K(), r = activeRange();
+    var tot = { base: 0, link: 0, enov: 0, zeds: 0, credit: 0 };
+    lp.forEach(function (l) {
+      tot.base += +l.base; tot.link += +l.link; tot.enov += +l.enov;
+      tot.zeds += +l.zeds; tot.credit += +l.credit;
+    });
+    var head = '<div class="strip">' +
+      [['Payments landed', int(lp.length), 'links'],
+       ['Cash in the bank', fmt(tot.link), 'link amounts'],
+       ['Debt cleared', fmt(tot.base), 'driver debt'],
+       ['eNovate side', fmt(tot.enov), 'of the landed cash'],
+       ["Zed's side", fmt(tot.zeds), 'retained'],
+       ['Sent to eNovate', fmt(k.transferred), 'in this range']].map(function (c) {
+        return '<div><div class="l">' + esc(c[0]) + '</div><div class="v num">' + c[1] +
+          '</div><div class="n">' + esc(c[2]) + '</div></div>';
+      }).join('') + '</div>';
+    if (!lp.length) {
+      return head + empty('eNovate remittance sheet',
+        'No driver payment has landed in this range yet.');
+    }
+    var byDriver = {};
+    lp.forEach(function (l) {
+      var g = byDriver[l.driver] ||
+        (byDriver[l.driver] = { id: l.driver, name: l.name || l.driver, n: 0, base: 0, link: 0, enov: 0 });
+      g.n++; g.base += +l.base; g.link += +l.link; g.enov += +l.enov;
+    });
+    var groups = Object.keys(byDriver).map(function (x2) { return byDriver[x2]; })
+      .sort(function (a, b) { return b.link - a.link; });
+    var rows = lp.map(function (l) {
+      var dr = idx[l.driver] || {};
+      return '<tr data-k="' +
+        esc([l.id, l.driver, l.name || '', l.paid, l.deposit].join(' ').toLowerCase()) + '">' +
+        '<td class="num">' + esc(l.deposit) + '</td>' +
+        '<td class="num" style="color:' + C.soft + '">' + esc(l.driver) + '</td>' +
+        '<td style="font-weight:500">' + esc(l.name || '\u2014') + '</td>' +
+        '<td class="num" style="color:' + C.soft + '">' + esc(dr.phone || '\u2014') + '</td>' +
+        '<td class="num" style="color:' + C.muted + '">' + esc(l.id) + '</td>' +
+        '<td class="num">' + esc(l.paid) + '</td>' +
+        '<td class="right num">' + fmt(l.base) + '</td>' +
+        '<td class="right num" style="font-weight:600;color:' + C.tealDeep + '">' + fmt(l.link) + '</td>' +
+        '<td class="right num" style="font-weight:600">' + fmt(l.enov) + '</td>' +
+        '<td class="right num" style="color:' + C.muted + '">' + fmt(l.zeds) + '</td>' +
+        '<td class="right num" style="color:' + C.muted + '">' + fmt(l.credit) + '</td></tr>';
+    }).join('');
+    var sheet = panel('Who paid, and what landed in the bank',
+      tools('remSearch', 'tblRemit', 'Driver, link or date\u2026', null) +
+      '<div class="scroll list"><table class="data" id="tblRemit"><thead><tr>' +
+      th('In bank on') + th('Driver ID') + th('Driver') + th('Mobile') + th('Link / Ref') +
+      th('Paid on') + th('Debt paid', 1) + th('Cash landed', 1) + th('eNovate share', 1) +
+      th("Zed's share", 1) + th('Credit', 1) + '</tr></thead><tbody>' + rows +
+      '<tr class="tot"><td>TOTAL</td><td></td><td>' + lp.length +
+      ' payments</td><td></td><td></td><td></td><td class="right num">' + fmt(tot.base) +
+      '</td><td class="right num">' + fmt(tot.link) + '</td><td class="right num">' +
+      fmt(tot.enov) + '</td><td class="right num">' + fmt(tot.zeds) +
+      '</td><td class="right num">' + fmt(tot.credit) + '</td></tr></tbody></table></div>' +
+      noteLine('This is the sheet to send with the transfer: every driver whose cash actually ' +
+        'reached the account between <b>' + esc(r.start) + '</b> and <b>' + esc(r.end) +
+        '</b>. Money still in transit is deliberately excluded \u2014 eNovate is only paid out ' +
+        'of cash already held.'));
+    var per = panel('By driver', '<div class="scroll"><table class="data"><thead><tr>' +
+      th('Driver') + th('Payments', 1) + th('Debt paid', 1) + th('Cash landed', 1) +
+      th('eNovate share', 1) + '</tr></thead><tbody>' + groups.map(function (g) {
+        return '<tr><td style="font-weight:500">' + esc(g.name) + '<span class="num" style="color:' +
+          C.muted + ';font-size:10.5px;margin-left:8px">' + esc(g.id) + '</span></td>' +
+          '<td class="right num">' + g.n + '</td><td class="right num">' + fmt(g.base) + '</td>' +
+          '<td class="right num" style="font-weight:600">' + fmt(g.link) + '</td>' +
+          '<td class="right num">' + fmt(g.enov) + '</td></tr>';
+      }).join('') + '</tbody></table></div>', groups.length + ' drivers');
+    return head + sheet + per;
+  }
+
+  /* ------------------------------------------------------------------ RECON */
+  function pgRecon(d) {
+    var k = K(), m = d.model, st = settings();
+    var badChk = (d.checks || []).filter(function (c) { return !c.pass; }).length;
+    var hard = +k.badDate + +k.noRate + +k.badTrip + +k.dupLinks;
+    var soft = +k.lowFare + +k.sysGap + +k.badPhone + +k.unconfirmed;
+
+    var h = acc('a0', 'Connection', (d.version || '?'), 'ok',
+      '<div class="rates">' +
+      '<div class="rate"><div class="l">Engine</div><div class="v num" style="font-size:14px">' +
+      esc(d.version || '?') + '</div></div>' +
+      '<div class="rate"><div class="l">Transport</div><div class="v num" style="font-size:13px">' +
+      (X.live ? 'Apps Script' : 'GitHub Pages') + '</div></div>' +
+      '<div class="rate"><div class="l">Last read</div><div class="v num" style="font-size:14px">' +
+      (S.lastOk ? clock(S.lastOk) : '\u2014') + '</div></div>' +
+      '<div class="rate"><div class="l">Sheet time</div><div class="v num" style="font-size:14px">' +
+      (d.serverTime ? clock(d.serverTime) : '\u2014') + '</div></div></div>' +
+      (X.live ? '' : '<p class="note">' + ic('info') + '<span>Reading from <code>' +
+        esc(X.API.slice(0, 78)) + '\u2026</code></span></p>'));
+
+    h += acc('a1', 'Reconciliation identities',
+      badChk ? badChk + ' failing' : 'All ' + (d.checks || []).length + ' close at 0.00',
+      badChk ? 'no' : 'ok',
+      '<div class="chk">' + (d.checks || []).map(function (c) {
+        return '<div class="c"><div class="t">' + esc(c.label) +
+          '</div><div class="num" style="font-weight:600;color:' + (c.pass ? C.ok : C.bad) +
+          '">' + fmt(c.diff) + '</div></div>';
+      }).join('') + '</div>');
+
+    h += acc('a2', 'Data quality', hard ? hard + ' to fix' : (soft ? soft + ' to look at' : 'Clean'),
+      hard ? 'no' : (soft ? 'mid' : 'ok'),
+      '<div class="scroll"><table class="data"><tbody>' +
+      [['Unreadable trip date', k.badDate, 1], ['No rate card row', k.noRate, 1],
+       ['Trip failing its own check', k.badTrip, 1], ['Duplicate link ID', k.dupLinks, 1],
+       ['Fare below the minimum', k.lowFare, 0], ['Debt differs from the system column', k.sysGap, 0],
+       ['Phone cell is not a phone', k.badPhone, 0], ['Open dispute', k.disputes, 0],
+       ['Day with no deposit saved', k.unconfirmed, 0],
+       ['Transfer with no bank tariff band', k.achUnknown, 0]].map(function (r) {
+        var n = Number(r[1]) || 0;
+        return '<tr><td>' + esc(r[0]) + '</td><td class="right num" style="font-weight:600;color:' +
+          (n === 0 ? C.ok : (r[2] ? C.bad : C.warn)) + '">' + int(n) + '</td></tr>';
+      }).join('') + '</tbody></table></div>');
+
+    h += acc('a3', 'Bank variance', Number(k.variance) === 0 ? '0.00' : fmt(k.variance),
+      Number(k.variance) === 0 ? 'ok' : 'no',
+      '<div class="scroll"><table class="data"><tbody>' +
+      [['Expected from the links', fmt(k.charged)], ['In the bank', fmt(k.deposit)],
+       ['In transit \u2014 not landed yet', fmt(k.transit)],
+       ['Days with no deposit saved', int(k.unconfirmed)],
+       ['Days held back by a variance', int(k.varianceBlocked || 0)]].map(function (r) {
+        return '<tr><td>' + esc(r[0]) + '</td><td class="right num" style="font-weight:600">' +
+          r[1] + '</td></tr>';
+      }).join('') + '</tbody></table></div>');
+
+    h += acc('a4', 'Earned to sent', fmt(k.transferred), 'ok', (function () {
+      var rows = [['Debt earned', k.debt, C.orange, 1],
+        ['Collected from drivers', k.matched, C.tealBright, 1],
+        ["Zed's commission", k.zedsRel, C.navy], ["Zed's link fees", k.zedsFees, C.navy],
+        ['eNovate share', k.enovRel, C.teal], ['eNovate link fees', k.enovFees, C.teal],
+        ['\u2212 ACH charged to eNovate', k.ach, C.red],
+        ['SENT TO eNOVATE', k.transferred, C.tealDeep, 1],
+        ['In the collection pool', k.poolTotal, C.warn, 1],
+        ['Still on the drivers', Number(k.debt) - Number(k.matched), C.muted, 1]];
+      var max = 1;
+      rows.forEach(function (r) { if (Math.abs(r[1]) > max) max = Math.abs(r[1]); });
+      return rows.map(function (r) {
+        return '<div class="wf' + (r[3] ? ' key' : '') + '"><div class="lb">' + r[0] +
+          '</div><div class="tk"><div style="width:' + w(r[1], max) + ';background:' + r[2] +
+          '"></div></div><div class="vl">' + fmt(r[1]) + '</div></div>';
+      }).join('');
+    })());
+
+    h += acc('a5', 'Rate card', m ? 'From ' + m.effectiveFrom : 'Missing', m ? 'ok' : 'no',
+      m ? '<div class="rates">' +
+        [['Commission', pct(m.commRate)], ['Platform fee', fmt(m.fixedFee)],
+         ['VAT', pct(m.vatRate)], ['eNovate of commission', pct(m.eShareComm)],
+         ['SSG of commission', pct(m.ssgShareComm)], ['eNovate of platform fee', pct(m.eShareFixed)],
+         ['SSG of platform fee', pct(m.ssgShareFixed)],
+         ['Traffic of platform fee', pct(m.trafficShareFixed)],
+         ["Zed's share of the eNovate slice", pct(m.zedsShare)]].map(function (c) {
+          return '<div class="rate"><div class="l">' + esc(c[0]) + '</div><div class="v num">' +
+            c[1] + '</div></div>';
+        }).join('') + '</div>' : '');
+
+    if (m && m.ex) {
+      h += acc('a6', 'One trip, step by step', 'Live from the rate card', 'ok',
+        [['1', 'Rider pays', m.ex.gross], ['2', 'Meter fare \u2014 the driver keeps it', m.ex.meter],
+         ['3', 'Service commission', m.ex.comm], ['4', 'Fixed platform fee', m.ex.fixed],
+         ['5', 'VAT on the eNovate slice only', m.ex.vat], ['=', 'DRIVER DEBT', m.ex.debt],
+         ['A', "RETAINED BY ZED'S", m.ex.zeds], ['B', 'TO eNOVATE', m.ex.enov]].map(function (s) {
+          var key = s[0] === '=' || s[0] === 'A' || s[0] === 'B';
+          return '<div class="step"><div class="k"' +
+            (key ? ' style="background:' + C.tealDeep + ';color:#FFF"' : '') + '>' + s[0] +
+            '</div><div class="t"' + (key ? ' style="font-weight:600"' : '') + '>' + s[1] +
+            '</div><div class="v"' + (key ? ' style="color:' + C.tealDeep + '"' : '') + '>' +
+            fmt(s[2]) + '</div></div>';
+        }).join('') +
+        (m.ex.zedsComm !== undefined ? '<div class="step"><div class="k">\u00b7</div>' +
+          '<div class="t" style="color:' + C.muted + '">Zed\u2019s ' + fmt(m.ex.zeds) +
+          ' is commission ' + fmt(m.ex.zedsComm) + ' + fixed fee ' + fmt(m.ex.zedsFixed) +
+          ' + VAT ' + fmt(m.ex.zedsVat) + '.</div><div class="v"></div></div>' : '') +
+        '<div class="step"><div class="k">\u00b7</div><div class="t" style="color:' + C.muted +
+        '">Inside the eNovate amount: eNovate ' + fmt(m.ex.enovOwn) + ' \u00b7 SSG ' +
+        fmt(m.ex.ssg) + ' \u00b7 Traffic ' + fmt(m.ex.traffic) +
+        ' \u2014 they distribute it onward, it is never split in the money path.</div>' +
+        '<div class="v"></div></div>');
+    }
+
+    var week = weekText(S.week);
+    var okWeek = week === 'Sun, Mon, Tue, Wed, Thu';
+    h += acc('a7', 'Working week and the bank',
+      okWeek ? week : week + ' \u2014 check this', okWeek ? 'ok' : 'mid',
+      '<div class="rates">' +
+      '<div class="rate"><div class="l">Transfer days</div><div class="v num" style="font-size:14px">' +
+      esc(week) + '</div></div>' +
+      '<div class="rate"><div class="l">Holidays typed in</div><div class="v num">' +
+      int(Object.keys(S.holidays).length) + '</div></div>' +
+      '<div class="rate"><div class="l">Transfers sent</div><div class="v num">' +
+      int(k.transfers || 0) + '</div></div>' +
+      '<div class="rate"><div class="l">ACH charged</div><div class="v num">' + fmt(k.ach) + '</div></div>' +
+      '<div class="rate"><div class="l">Expected ACH</div><div class="v num">' +
+      fmt(Number(k.transfers || 0) * achFee()) + '</div></div>' +
+      '<div class="rate"><div class="l">Tariff bands typed in</div><div class="v num">' +
+      int((st.achTiers || []).length) + '</div></div></div>' +
+      ((st.achTiers || []).length ? '<div class="scroll" style="margin-top:12px">' +
+        '<table class="data"><thead><tr>' + th('From', 1) + th('Up to', 1) +
+        th('Bank charge', 1) + '</tr></thead><tbody>' + st.achTiers.map(function (t2) {
+          return '<tr><td class="right num">' + fmt(t2.from) + '</td><td class="right num">' +
+            (t2.to === null ? 'and above' : fmt(t2.to)) + '</td>' +
+            '<td class="right num" style="font-weight:600">' + fmt(t2.cost) + '</td></tr>';
+        }).join('') + '</tbody></table></div>'
+        : '<div class="alert warn" style="margin-top:12px">No bank tariff band is typed in, ' +
+          'so the ACH margin cannot be worked out. Fill in the BANK ACH COST block on ' +
+          'Control &amp; Checks.</div>') +
+      noteLine('ACH charged must always equal the fee times the number of transfers actually ' +
+        'sent. If they differ, a day fired a transfer that should never have gone out.'));
+
+    var feeBad = Number(st.linkFee) !== 1.5 || Number(st.ach) !== 50 || !st.remit;
+    h += acc('a8', 'Fees and settings', feeBad ? 'Check these' : 'As contracted',
+      feeBad ? 'mid' : 'ok',
+      '<div class="scroll"><table class="data"><thead><tr><th>Setting</th>' +
+      '<th class="right">Value</th><th class="right">Range total</th></tr></thead><tbody>' +
+      [['Link fee added \u00b7 total', fmt(st.linkFee), '', Number(st.linkFee) === 1.5],
+       ["\u00b7 Zed's half", fmt(st.zedsLinkFee), fmt(k.zedsFees), true],
+       ['\u00b7 eNovate half', fmt(st.enovLinkFee), fmt(k.enovFees), !!st.remit],
+       ['ACH charged to eNovate', fmt(st.ach), fmt(k.ach), Number(st.ach) === 50],
+       ['Minimum transfer (net)', fmt(st.minTransfer), '', Number(st.minTransfer) > 0],
+       ['Deposit lag', 'T+' + int(st.lag), '', Number(st.lag) >= 0 && Number(st.lag) <= 3],
+       ['Block threshold', fmt(st.block), '', Number(st.block) >= 10],
+       ['Only send against a saved deposit', st.gate ? 'Yes' : 'No', '', !!st.gate],
+       ['Hold disputed trips', st.holdDisputed ? 'Yes' : 'No', fmt(k.held), !!st.holdDisputed],
+       ['Settlement note goes to', esc(st.emailTo || '(nobody)'), '', !!st.emailTo]]
+        .map(function (r) {
+          return '<tr><td' + (String(r[0]).charAt(0) === '\u00b7'
+            ? ' style="color:' + C.muted + ';padding-left:15px"' : ' style="font-weight:500"') +
+            '>' + esc(r[0]) + '</td><td class="right num" style="font-weight:600;color:' +
+            (r[3] ? C.ink : C.bad) + '">' + r[1] + '</td>' +
+            '<td class="right num" style="color:' + C.muted + '">' + (r[2] || '') + '</td></tr>';
+        }).join('') + '</tbody></table></div>');
+    return h;
+  }
+
+  var PAGEFN = { today: pgToday, pool: pgPool, revenue: pgRevenue, history: pgHistory,
+    drivers: pgDrivers, links: pgLinks, remit: pgRemit, recon: pgRecon };
+
+  X.chrome = { drawRail: drawRail, drawHeader: drawHeader, PAGEFN: PAGEFN,
+    pool: pool, poolRows: poolRows, nextTransferDay: nextTransferDay,
+    carriedFrom: carriedFrom, landedPayments: landedPayments, driverIndex: driverIndex,
+    achFee: achFee, minTransfer: minTransfer, K: K, settings: settings };
+})();
+/* ==================== PART 3 — LOADER, RENDER, EXPORT, EVENTS ==================== */
+(function () {
+  'use strict';
+  var X = window.__TAXI, CH = X.chrome;
+  var S = X.S, C = X.C, PAGES = X.PAGES, PAGEMAP = X.PAGEMAP;
+  var ic = X.ic, fmt = X.fmt, fmtN = X.fmtN, esc = X.esc, int = X.int;
+  var iso = X.iso, dow = X.dow, dm = X.dm, addD = X.addD, weekText = X.weekText;
+  var isWorkDay = X.isWorkDay, nextWorkDay = X.nextWorkDay;
+  var activeRange = X.activeRange, opts = X.opts, optsKey = X.optsKey, q = X.q;
+
+  function root() { return X.getRoot(); }
+  function toast(m, kind) {
+    var t = q('toast');
+    if (!t) return;
+    t.className = 'toast on ' + (kind || '');
+    t.textContent = m;
+    clearTimeout(t._h);
+    t._h = setTimeout(function () { t.className = 'toast ' + (kind || ''); }, 6000);
+  }
+
+  /* ------------------------------------------------------------------ load */
+  function adopt(d, cached) {
+    S.data = d;
+    S.sig = d.sig || '';
+    S.cached = !!cached;
+    if (!cached) { S.err = ''; S.lastOk = Date.now(); S.loadedKey = optsKey(); }
+    if (d.settings && d.settings.workWeek) S.week = X.parseWeek(d.settings.workWeek);
+    S.holidays = {};
+    if (d.settings && d.settings.holidays) {
+      [].concat(d.settings.holidays).forEach(function (h) { S.holidays[h] = 1; });
+    }
+  }
+
+  function load(silent) {
+    if (S.busy) return;
+    S.busy = true;
+    if (!silent) CH.drawHeader();
+    if (!S.data && root()) {
+      var c = X.cacheLoad();
+      if (c) { adopt(c, true); render(); }
+      else root().querySelector('#content').innerHTML =
+        '<div class="loading">Reading the sheet\u2026<br><span style="font-size:11.5px">' +
+        'The first read after an idle spell can take a few seconds while Google wakes the ' +
+        'script up.</span></div>';
+    }
+    X.call('getDashboardData', [opts()], function (d) {
+      S.busy = false;
+      var changed = (d.sig || '') !== S.sig || S.cached;
+      adopt(d, false);
+      X.cacheSave(d);
+      if (changed || !root().querySelector('.body')) render(); else CH.drawHeader();
+    }, function (e) {
+      S.busy = false;
+      S.err = (e && e.message) ? e.message : String(e);
+      if (!S.data) renderDead(); else { CH.drawHeader(); if (!silent) toast(S.err, 'bad'); }
+    });
+  }
+
+  function act(fn, args) {
+    if (S.busy) return;
+    S.busy = true; CH.drawHeader();
+    X.call(fn, args, function (d) {
+      S.busy = false;
+      adopt(d, false);
+      X.cacheSave(d);
+      render();
+      if (d.action) toast(d.action.message, d.action.ok ? 'good' : 'bad');
+    }, function (e) {
+      S.busy = false;
+      S.err = (e && e.message) ? e.message : String(e);
+      CH.drawHeader();
+      toast('That did not save: ' + S.err, 'bad');
+    });
+  }
+
+  /* The whole screen when there is no data at all. It says what was tried and what to
+     check, because a portal that cannot reach the sheet has exactly one job: tell you. */
+  function renderDead() {
+    root().querySelector('#content').innerHTML =
+      '<div class="loading err" style="text-align:left;max-width:720px;margin:0 auto">' +
+      '<div style="font-size:17px;font-weight:600;margin-bottom:10px;display:flex;' +
+      'align-items:center;gap:9px">' + ic('bang') + 'Cannot read the sheet</div>' +
+      '<p style="color:' + C.ink + ';font-weight:500">' + esc(S.err) + '</p>' +
+      '<p style="color:' + C.muted + ';margin-top:16px">Tried:<br><code>' +
+      esc(X.API || '(no URL configured)') + '</code></p>' +
+      '<p style="color:' + C.muted + ';margin-top:16px">Check, in order:</p>' +
+      '<ol style="color:' + C.muted + ';line-height:1.9;padding-left:18px">' +
+      '<li>Apps Script &gt; <b>Deploy &gt; Manage deployments</b>. The URL above must be the ' +
+      'one shown there, and must end in <b>/exec</b>.</li>' +
+      '<li>Edit that deployment: <b>Execute as: Me</b>, <b>Who has access: Anyone</b>.</li>' +
+      '<li>After any change to Code.gs you must publish <b>Version: New version</b>. ' +
+      'Editing the code alone does nothing to this URL.</li>' +
+      '<li>Open the URL directly in a browser tab. You should see JSON. If you see a Google ' +
+      'sign-in page, step 2 is not done.</li></ol>' +
+      '<div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap">' +
+      '<button class="btn btn-primary" data-act="refresh">' + ic('sync') + 'Try again</button>' +
+      '<button class="btn btn-ghost" data-act="opendirect">Open the URL in a tab</button>' +
+      '</div></div>';
+    CH.drawHeader();
+  }
+
+  function render() {
+    var d = S.data;
+    if (!d) { renderDead(); return; }
+    var body = '';
+    if (S.cached) {
+      body += '<div class="alert warn">Showing the last saved copy while the sheet is read. ' +
+        'Nothing here is invented \u2014 it is your own figures from ' +
+        (d._at ? X.clock(d._at) : 'earlier') + '.</div>';
+    }
+    if (S.err) body += '<div class="alert">Last refresh failed: ' + esc(S.err) + '</div>';
+    if (d.rateWarn) body += '<div class="alert">' + esc(d.rateWarn) + '</div>';
+    var fn = CH.PAGEFN[S.page] || CH.PAGEFN.today;
+    body += fn(d);
+    root().querySelector('#content').innerHTML = '<div class="body">' + body + '</div>';
+    root().querySelector('#rail').innerHTML = CH.drawRail();
+    CH.drawHeader();
+    ['tblDrivers', 'tblLinks', 'tblRemit'].forEach(applyFilter);
+  }
+
+  /* Switching pages does NOT hit the network unless the range actually changed. The old
+     build called load() on every switch, which is most of what "lag" felt like. */
+  function go(k) {
+    if (!PAGEMAP[k]) return;
+    S.page = k; S.pop = false;
+    X.persist();
+    render();
+    window.scrollTo(0, 0);
+    if (optsKey() !== S.loadedKey) load(true);
+  }
+
+  /* ------------------------------------------------------------------ tables */
+  function applyFilter(tableId) {
+    var t = root().querySelector('#' + tableId);
+    if (!t || !t.tBodies[0]) return;
+    var qq = t.getAttribute('data-q') || '', chip = t.getAttribute('data-chip') || 'all';
+    var terms = qq.split(/\s+/).filter(function (x) { return x; });
+    var rows = t.tBodies[0].rows, shown = 0, total = 0;
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      if (r.className.indexOf('tot') >= 0 || r.className.indexOf('sep') >= 0) continue;
+      total++;
+      var key = (r.getAttribute('data-k') || r.textContent).toLowerCase(), ok = true;
+      for (var j = 0; j < terms.length; j++) if (key.indexOf(terms[j]) < 0) { ok = false; break; }
+      if (ok && chip !== 'all') ok = (r.getAttribute('data-s') || '') === chip;
+      r.style.display = ok ? '' : 'none';
+      if (ok) shown++;
+    }
+    var hh = root().querySelector('#hits-' + tableId);
+    if (hh) hh.textContent = shown === total ? total + ' rows' : shown + ' of ' + total + ' rows';
+  }
+  function sortTable(th2) {
+    var t = th2;
+    while (t && t.tagName !== 'TABLE') t = t.parentNode;
+    if (!t) return;
+    var idx = th2.cellIndex, dir = th2.classList.contains('asc') ? -1 : 1;
+    var hs = th2.parentNode.cells, i;
+    for (i = 0; i < hs.length; i++) { hs[i].classList.remove('asc'); hs[i].classList.remove('desc'); }
+    th2.classList.add(dir === 1 ? 'asc' : 'desc');
+    var bodyEl = t.tBodies[0], rows = [], keep = [];
+    for (i = 0; i < bodyEl.rows.length; i++) {
+      var row = bodyEl.rows[i];
+      if (row.className.indexOf('tot') >= 0 || row.className.indexOf('sep') >= 0) keep.push(row);
+      else rows.push(row);
+    }
+    var val = function (row) {
+      var txt = (row.cells[idx] ? row.cells[idx].textContent : '').replace(/,/g, '').trim();
+      var n = parseFloat(txt);
+      return (txt !== '' && !isNaN(n) &&
+        /^[-+\u2212]?[0-9.]+%?$/.test(txt.replace('\u2212', '-'))) ? n : txt.toLowerCase();
+    };
+    rows.sort(function (a, b) {
+      var x = val(a), y = val(b);
+      if (typeof x === 'number' && typeof y === 'number') return (x - y) * dir;
+      return String(x).localeCompare(String(y)) * dir;
+    });
+    rows.forEach(function (r) { bodyEl.appendChild(r); });
+    keep.forEach(function (r) { bodyEl.appendChild(r); });
+  }
+
+  /* ------------------------------------------------------------------ export */
+  function n2(v) { return Math.round((Number(v) || 0) * 100) / 100; }
+  function T(s) { return { v: s, t: 'title' }; }
+  function H(a) { return a.map(function (s) { return { v: s, t: 'head' }; }); }
+  function B(v) { return { v: v, b: true }; }
+  function txt(v) { return { v: v === null || v === undefined ? '' : String(v), m: false }; }
+
+  function meta(extra) {
+    var r = activeRange(), d = S.data || {};
+    var out = [[T('Taxi Sharm \u2014 ' + PAGEMAP[S.page].t)],
+      [txt('Range'), txt((r.start || '\u2014') + '  to  ' + (r.end || '\u2014'))],
+      [txt('Generated'), txt(new Date().toISOString().slice(0, 16).replace('T', ' '))],
+      [txt('Engine'), txt(d.version || ''), txt('Working week'), txt(weekText(S.week))]];
+    (extra || []).forEach(function (x) { out.push(x); });
+    out.push([]);
+    return out;
+  }
+
+  function exportPage() {
+    var d = S.data;
+    if (!d) { toast('Nothing to export yet.', 'bad'); return; }
+    if (!window.TaxiXlsx) { toast('The spreadsheet writer did not load.', 'bad'); return; }
+    var r = activeRange(), k = d.kpi || {}, sheets = [];
+
+    if (S.page === 'today') {
+      var t = d.focus || {};
+      var rows = meta([[txt('Day'), txt(t.date + '  (' + dow(t.date) + ')')],
+        [txt('Working day'), txt(isWorkDay(t.date) ? 'Yes' : 'No \u2014 carried to ' + nextWorkDay(t.date))]]);
+      rows.push(H(['Line', 'Amount (EGP)']));
+      [['Trips', t.trips], ['Rider fares', t.gross], ['Driver debt earned', t.debt], [null, null],
+       ['Bank deposit received', t.deposit], ['Expected from the links', t.expected],
+       ['Variance', t.variance], [null, null],
+       ['Collected from drivers', t.matched], ['Driver credit held', t.credit],
+       ["ZED'S COMMISSION", t.zeds], ["ZED'S LINK FEE", t.zedsFee], ["ZED'S REVENUE", t.kept],
+       [null, null], ['eNovate share', t.enov], ['eNovate link fee', t.fees],
+       ['ACH charged to eNovate', -Math.abs(Number(t.ach) || 0)],
+       ['NET TRANSFER TO eNOVATE', t.net]].forEach(function (x) {
+        if (x[0] === null) { rows.push([]); return; }
+        var key = x[0] === 'NET TRANSFER TO eNOVATE' || x[0] === "ZED'S REVENUE";
+        rows.push([key ? B(x[0]) : txt(x[0]), key ? B(n2(x[1])) : n2(x[1])]);
+      });
+      rows.push([]);
+      rows.push([txt('ACH cost to the bank'),
+        t.achCost === null || t.achCost === undefined ? txt('not known') : n2(t.achCost)]);
+      rows.push([txt('ACH margin'),
+        t.achMargin === null || t.achMargin === undefined ? txt('not known') : n2(t.achMargin)]);
+      rows.push([txt('Bank reference'), txt(t.ref || '')]);
+      rows.push([txt('Logged at'), txt(t.loggedAt || '')]);
+      sheets.push({ name: 'Transfer voucher', cols: [42, 18], rows: rows });
+
+    } else if (S.page === 'pool') {
+      var p = CH.pool(), nd = CH.nextTransferDay(), carry = CH.carriedFrom();
+      var s1 = meta([[txt('Next transfer day'), txt(nd + '  (' + dow(nd) + ')')],
+        [txt('Carried non-working days'), txt(carry.length
+          ? carry.map(function (x) { return dow(x) + ' ' + x; }).join(', ') : 'none')]]);
+      s1.push(H(['Collection pool', 'Amount (EGP)']));
+      [['LINK CASH LANDED, NOT YET SETTLED', p.cash, 1],
+       ['\u00b7 driver debt collected', p.debt, 0],
+       ["\u00b7 Zed's half of the link fees", p.zedsFee, 0],
+       ['\u00b7 eNovate half of the link fees', p.enovFee, 0],
+       ['\u00b7 driver credit held', p.credit, 0],
+       ["ZED'S SIDE \u2014 stays in the account", p.zedsTotal, 1],
+       ['eNOVATE SIDE \u2014 goes out', p.enovTotal, 1],
+       ['', null, 0],
+       ['Confirmed and ready to send', p.ready, 0],
+       ['Waiting on a bank deposit', p.pending, 0],
+       ['Held back by a bank variance', p.blocked, 0],
+       ['ACH charged to eNovate on the next transfer', -Math.abs(p.achCharged), 0],
+       ['LEAVES THE ACCOUNT ON THE NEXT TRANSFER', p.wire, 1]].forEach(function (x) {
+        if (x[1] === null) { s1.push([]); return; }
+        s1.push([x[2] ? B(x[0]) : txt(x[0]), x[2] ? B(n2(x[1])) : n2(x[1])]);
+      });
+      s1.push([]);
+      s1.push([txt('Bank cost on the next transfer'),
+        p.achCost === null ? txt('not known') : n2(p.achCost)]);
+      s1.push([txt('ACH margin'), p.achMargin === null ? txt('not known') : n2(p.achMargin)]);
+      sheets.push({ name: 'Pool summary', cols: [50, 18], rows: s1 });
+
+      var s2 = [H(['Day', 'Weekday', 'Working day', 'Links', 'Link cash', 'Bank deposit',
+        'Variance', "Zed's side", 'eNovate held', 'Why it is still held'])];
+      CH.poolRows().forEach(function (x) {
+        var why = { variance: 'Deposit does not match the links',
+          deposit: 'No bank deposit saved yet',
+          nonworking: 'Non-working day \u2014 waits for ' + nextWorkDay(x.date),
+          minimum: 'Below the minimum after the charge' }[x.poolReason] || 'Held';
+        s2.push([txt(x.date), txt(dow(x.date)), txt(isWorkDay(x.date) ? 'Yes' : 'No'),
+          { v: Number(x.links) || 0, m: false }, n2(x.expected), n2(x.deposit), n2(x.variance),
+          n2(x.kept), n2(x.entitlement), txt(why)]);
+      });
+      sheets.push({ name: 'Days holding money', cols: [13, 10, 12, 8, 14, 14, 12, 13, 14, 42],
+        rows: s2, freeze: 1 });
+
+    } else if (S.page === 'revenue') {
+      var rv = d.revenue;
+      if (!rv) { toast('This engine does not send the revenue split.', 'bad'); return; }
+      var rr = meta();
+      rr.push(H(['Component', 'Total', 'SSG', 'Traffic Dept', 'eNovate own', "Zed's"]));
+      [['Service commission', rv.earned.commission], ['Fixed platform fee', rv.earned.fixed],
+       ['VAT (on the eNovate slice only)', rv.earned.vat], ['DRIVER DEBT EARNED', rv.earned.debt]]
+        .forEach(function (x, i) {
+          var bold = i === 3, o = x[1];
+          rr.push([bold ? B(x[0]) : txt(x[0]),
+            bold ? B(n2(o.total)) : n2(o.total), n2(o.ssg), n2(o.traffic),
+            bold ? B(n2(o.enov)) : n2(o.enov), bold ? B(n2(o.zeds)) : n2(o.zeds)]);
+        });
+      rr.push([]);
+      rr.push(H(['Collected on the links', 'Total', '', '', 'eNovate', "Zed's"]));
+      rr.push([txt('Share of the collected debt'), n2(rv.links.collectedDebt), '', '',
+        n2(rv.links.collectedEnov), n2(rv.links.collectedZeds)]);
+      rr.push([txt('Link fee added to each link'), n2(rv.links.total), '', '',
+        n2(rv.links.enov), n2(rv.links.zeds)]);
+      rr.push([B('TOTAL FROM THE LINKS'),
+        B(n2(Number(rv.links.collectedDebt) + Number(rv.links.total))), '', '',
+        B(n2(Number(rv.links.collectedEnov) + Number(rv.links.enov))),
+        B(n2(Number(rv.links.collectedZeds) + Number(rv.links.zeds)))]);
+      rr.push([]);
+      rr.push(H(['The bank', 'Amount (EGP)']));
+      rr.push([txt('ACH charged to eNovate'), n2(rv.bank.charged)]);
+      rr.push([txt('ACH actually paid to the bank'),
+        rv.bank.cost === null ? txt('not known') : n2(rv.bank.cost)]);
+      rr.push([B('ACH MARGIN'), rv.bank.margin === null ? txt('not known') : B(n2(rv.bank.margin))]);
+      rr.push([]);
+      rr.push([B("ZED'S TOTAL REVENUE IN THIS RANGE"), B(n2(k.zedsGrand))]);
+      sheets.push({ name: 'Revenue split', cols: [42, 16, 14, 14, 16, 16], rows: rr, freeze: 6 });
+
+    } else if (S.page === 'history') {
+      var h = meta();
+      h.push(H(['Date', 'Weekday', 'Working day', 'Links', 'In the bank', 'Expected', 'Variance',
+        'Collected', "Zed's commission", "Zed's link fee", "ZED'S REVENUE", 'eNovate share',
+        'eNovate fee', 'ACH charged', 'ACH cost', 'ACH margin', 'SENT TO eNOVATE',
+        'Driver credit', 'In the pool', 'State', 'Bank reference']));
+      var tot = { dep: 0, ex: 0, m: 0, kp: 0, e: 0, f: 0, a: 0, n: 0, mg: 0 };
+      d.days.forEach(function (x) {
+        tot.dep += +x.deposit; tot.ex += +x.expected; tot.m += +x.matched; tot.kp += +x.kept;
+        tot.e += +x.enov; tot.f += +x.fees; tot.a += +x.ach; tot.n += +x.net;
+        tot.mg += Number(x.achMargin || 0);
+        h.push([txt(x.date), txt(dow(x.date)), txt(isWorkDay(x.date) ? 'Yes' : 'No'),
+          { v: Number(x.links) || 0, m: false }, n2(x.deposit), n2(x.expected), n2(x.variance),
+          n2(x.matched), n2(x.zeds), n2(x.zedsFee), n2(x.kept), n2(x.enov), n2(x.fees),
+          n2(x.ach), x.achCost === null ? txt('not known') : n2(x.achCost),
+          x.achMargin === null ? txt('not known') : n2(x.achMargin), n2(x.net), n2(x.credit),
+          x.inPool ? n2(x.entitlement) : n2(0), txt(x.state), txt(x.ref || '')]);
+      });
+      h.push([B('TOTAL'), '', '', '', B(n2(tot.dep)), B(n2(tot.ex)), B(n2(tot.dep - tot.ex)),
+        B(n2(tot.m)), '', '', B(n2(tot.kp)), B(n2(tot.e)), B(n2(tot.f)), B(n2(tot.a)), '',
+        B(n2(tot.mg)), B(n2(tot.n))]);
+      sheets.push({ name: 'Settlement history',
+        cols: [13, 9, 11, 7, 14, 14, 11, 13, 16, 15, 15, 14, 13, 13, 13, 13, 17, 13, 13, 40, 22],
+        rows: h, freeze: 6 });
+
+    } else if (S.page === 'drivers') {
+      var dr = meta();
+      dr.push(H(['Driver ID', 'Driver name', 'Mobile', 'Trips', 'Debt earned', 'Collected',
+        'Outstanding', 'Credit held', 'Held for dispute', 'Status']));
+      var td = { t: 0, e: 0, c: 0, o: 0, cr: 0, hd: 0 };
+      d.drivers.forEach(function (x) {
+        td.t += +x.trips; td.e += +x.earned; td.c += +x.collected; td.o += +x.outstanding;
+        td.cr += +x.credit; td.hd += +x.held;
+        dr.push([txt(x.id), txt(x.name), txt(x.phone || ''), { v: Number(x.trips) || 0, m: false },
+          n2(x.earned), n2(x.collected), n2(x.outstanding), n2(x.credit), n2(x.held), txt(x.status)]);
+      });
+      dr.push([B('TOTAL'), '', '', B(td.t), B(n2(td.e)), B(n2(td.c)), B(n2(td.o)), B(n2(td.cr)),
+        B(n2(td.hd))]);
+      sheets.push({ name: 'Drivers', cols: [13, 26, 16, 8, 14, 14, 14, 13, 16, 22],
+        rows: dr, freeze: 6 });
+
+    } else if (S.page === 'links') {
+      var lk = meta();
+      lk.push(H(['Link ID', 'Driver ID', 'Driver name', 'Debt requested', 'LINK AMOUNT',
+        'Date paid', 'In bank on', "Zed's side", 'eNovate side', 'Driver credit', 'State']));
+      d.payments.forEach(function (x) {
+        lk.push([txt(x.id), txt(x.driver), txt(x.name || ''), n2(x.base), n2(x.link),
+          txt(x.paid), txt(x.deposit), n2(x.zeds), n2(x.enov), n2(x.credit),
+          txt(x.landed ? 'In the bank' : 'In transit')]);
+      });
+      sheets.push({ name: 'Payment links',
+        cols: [16, 13, 26, 15, 15, 13, 13, 14, 14, 13, 15], rows: lk, freeze: 6 });
+
+    } else if (S.page === 'remit') {
+      var lp = CH.landedPayments(), idx = CH.driverIndex(), tt = { l: 0, e: 0, z: 0 };
+      var s = meta([[txt('Sheet'), txt('Drivers whose cash is confirmed in the bank account')],
+        [txt('Excluded'), txt('Payments still in transit')]]);
+      s.push(H(['Driver ID', 'Driver name', 'Mobile', 'Link ID', 'Date paid',
+        'Link amount (EGP)', 'eNovate share (EGP)', "Zed's share (EGP)"]));
+      lp.forEach(function (x) {
+        var dv = idx[x.driver] || {};
+        tt.l += +x.link; tt.e += +x.enov; tt.z += +x.zeds;
+        s.push([txt(x.driver), txt(x.name || ''), txt(dv.phone || ''), txt(x.id), txt(x.paid),
+          n2(x.link), n2(x.enov), n2(x.zeds)]);
+      });
+      s.push([B('TOTAL'), B(lp.length + ' payments'), '', '', '', B(n2(tt.l)), B(n2(tt.e)),
+        B(n2(tt.z))]);
+      s.push([]);
+      s.push([txt('Transferred to eNovate in this range'), '', '', '', '', '', n2(k.transferred)]);
+      s.push([txt('ACH charged to eNovate'), '', '', '', '', '', n2(k.ach)]);
+      s.push([txt('Still in the collection pool'), '', '', '', '', '', n2(k.poolTotal)]);
+      sheets.push({ name: 'eNovate remittance', cols: [13, 26, 16, 20, 13, 18, 19, 17],
+        rows: s, freeze: 8 });
+
+    } else {
+      var rc = meta();
+      rc.push(H(['Identity \u2014 every difference must be 0.00', 'Left', 'Right', 'Difference',
+        'Result']));
+      (d.checks || []).forEach(function (c) {
+        rc.push([txt(c.label), n2(c.left), n2(c.right), n2(c.diff), txt(c.pass ? 'OK' : 'FAIL')]);
+      });
+      sheets.push({ name: 'Identities', cols: [62, 15, 15, 14, 10], rows: rc, freeze: 6 });
+      var kp = [H(['KPI', 'Value'])];
+      [['Trips', k.trips], ['Rider fares', k.gross], ['Driver debt earned', k.debt],
+       ['Collected from drivers', k.matched], ['Driver credit held', k.credit],
+       ['Outstanding on drivers', k.outstanding], ["Zed's revenue from the links", k.zedsCash],
+       ["Zed's ACH margin", k.zedsAchMargin], ["ZED'S TOTAL REVENUE", k.zedsGrand],
+       ['eNovate entitlement from landed cash', k.enovEnt], ['Sent to eNovate', k.transferred],
+       ['ACH charged to eNovate', k.achCharged], ['ACH paid to the bank', k.achCost],
+       ['Transfers actually sent', k.transfers], ['In the collection pool', k.poolTotal],
+       ['Bank variance (must be 0.00)', k.variance], ['Unreadable trip dates', k.badDate],
+       ['Trips with no rate card row', k.noRate], ['Trips failing their own check', k.badTrip],
+       ['Duplicate link IDs', k.dupLinks], ['Open disputes', k.disputes]].forEach(function (x) {
+        kp.push([txt(x[0]), (x[1] === null || x[1] === undefined) ? txt('not known') : n2(x[1])]);
+      });
+      sheets.push({ name: 'KPIs', cols: [44, 16], rows: kp, freeze: 1 });
+    }
+
+    var name = 'taxi_sharm_' + S.page + '_' + (r.start || 'all') + '_' + (r.end || 'all') + '.xlsx';
+    try { window.TaxiXlsx.save(name, sheets); toast('Exported ' + name, 'good'); }
+    catch (err) { toast('Export failed: ' + (err && err.message ? err.message : err), 'bad'); }
+  }
+
+  /* ------------------------------------------------------------------ events */
+  function bind() {
+    var el0 = root();
+    el0.addEventListener('click', function (e) {
+      var el = e.target;
+      var goEl = el.closest ? el.closest('[data-go]') : null;
+      var actEl = el.closest ? el.closest('[data-act]') : null;
+      var chipEl = el.closest ? el.closest('[data-chip]') : null;
+      var presetEl = el.closest ? el.closest('[data-preset]') : null;
+      var thEl = el.closest ? el.closest('th[data-sort]') : null;
+
+      if (presetEl) {
+        var cfg = S.rng[S.page];
+        if (cfg) { cfg.preset = presetEl.getAttribute('data-preset'); cfg.start = ''; cfg.end = ''; }
+        S.pop = false; X.persist(); CH.drawHeader(); load();
+        return;
+      }
+      if (chipEl) {
+        var tid = chipEl.getAttribute('data-table');
+        var box = chipEl.parentNode.querySelectorAll('.chip');
+        for (var i = 0; i < box.length; i++) box[i].classList.remove('on');
+        chipEl.classList.add('on');
+        var tb = root().querySelector('#' + tid);
+        if (tb) tb.setAttribute('data-chip', chipEl.getAttribute('data-chip'));
+        applyFilter(tid);
+        return;
+      }
+      if (thEl) { sortTable(thEl); return; }
+      if (actEl) {
+        var a = actEl.getAttribute('data-act');
+        if (a === 'rail') { S.tight = !S.tight; root().classList.toggle('tight', S.tight); X.persist(); return; }
+        if (a === 'home') { S.focus = ''; S.driver = 'all'; go('today'); return; }
+        if (a === 'pop') { S.pop = !S.pop; CH.drawHeader(); return; }
+        if (a === 'export') { exportPage(); return; }
+        if (a === 'refresh') { S.err = ''; load(); return; }
+        if (a === 'opendirect') { window.open(X.API, '_blank'); return; }
+        if (a === 'copy') {
+          var v = actEl.getAttribute('data-v');
+          var ta = document.createElement('textarea');
+          ta.value = v; document.body.appendChild(ta); ta.select();
+          try { document.execCommand('copy'); } catch (err) {}
+          document.body.removeChild(ta);
+          toast('Copied ' + v, 'good');
+          return;
+        }
+        if (a === 'useexp') {
+          var f = q('depAmt');
+          if (f) { f.value = actEl.getAttribute('data-v'); f.focus(); }
+          return;
+        }
+        if (a === 'savedep') {
+          act('apiSetDeposit', [actEl.getAttribute('data-day'),
+            q('depAmt') ? q('depAmt').value : '', opts()]);
+          return;
+        }
+        if (a === 'saveach') {
+          act('apiSetAchCost', [actEl.getAttribute('data-day'),
+            q('achCost') ? q('achCost').value : '', opts()]);
+          return;
+        }
+        if (a === 'logtr') {
+          var ref = q('trRef') ? q('trRef').value.trim() : '';
+          if (!ref) { toast('Type the bank reference first.', 'bad'); return; }
+          var net = Number(actEl.getAttribute('data-net')) || 0;
+          var sent = q('trAmt') ? Number(q('trAmt').value) : net;
+          var note = ref;
+          if (Math.abs(sent - net) > 0.005) {
+            note = ref + ' \u00b7 sent ' + sent.toFixed(2) + ' (engine ' + net.toFixed(2) + ')';
+            toast('Logged ' + sent.toFixed(2) + ', but the engine derived ' + net.toFixed(2) +
+              '. The difference stays in the pool and goes out with the next transfer \u2014 ' +
+              'nothing is lost.', 'bad');
+          }
+          act('apiLogTransfer', [actEl.getAttribute('data-day'), note, opts()]);
+          return;
+        }
+        if (a === 'gotoday') {
+          S.focus = actEl.getAttribute('data-day');
+          S.rng.today.preset = 'day';
+          go('today');
+          if (optsKey() !== S.loadedKey) load(true);
+          return;
+        }
+        if (a === 'dayprev' || a === 'daynext') {
+          var cur = S.focus || (S.data && S.data.focus && S.data.focus.date) || iso(new Date());
+          S.focus = addD(cur, a === 'dayprev' ? -1 : 1);
+          CH.drawHeader(); load();
+          return;
+        }
+        if (a === 'dayreset') { S.focus = ''; CH.drawHeader(); load(); return; }
+        if (a === 'driver') { S.driver = actEl.getAttribute('data-v'); go('links'); load(true); return; }
+        if (a === 'cleardriver') { S.driver = 'all'; CH.drawHeader(); load(); return; }
+      }
+      if (goEl) { go(goEl.getAttribute('data-go')); return; }
+      if (S.pop && !(el.closest && el.closest('.rangebox'))) { S.pop = false; CH.drawHeader(); }
+    });
+
+    el0.addEventListener('input', function (e) {
+      var t = e.target;
+      if (t.getAttribute && t.getAttribute('data-table')) {
+        var tb = root().querySelector('#' + t.getAttribute('data-table'));
+        if (tb) tb.setAttribute('data-q', (t.value || '').toLowerCase().trim());
+        applyFilter(t.getAttribute('data-table'));
+      }
+    });
+    el0.addEventListener('change', function (e) {
+      var t = e.target;
+      if (t.getAttribute && t.getAttribute('data-date')) {
+        var cfg = S.rng[S.page];
+        if (!cfg) return;
+        var r = activeRange();
+        cfg.start = t.getAttribute('data-date') === 'start' ? t.value : r.start;
+        cfg.end = t.getAttribute('data-date') === 'end' ? t.value : r.end;
+        cfg.preset = 'custom';
+        X.persist(); CH.drawHeader(); load();
+      }
+    });
+    el0.addEventListener('toggle', function (e) {
+      if (e.target && e.target.className === 'acc' && e.target.id) {
+        S.open[e.target.id] = e.target.open;
+      }
+    }, true);
+
+    document.addEventListener('keydown', function (e) {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      var a = document.activeElement;
+      if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return;
+      var n = parseInt(e.key, 10);
+      if (n >= 1 && n <= PAGES.length) { go(PAGES[n - 1].k); e.preventDefault(); }
+      else if (e.key === 'e') exportPage();
+      else if (e.key === 'r') load();
+    });
+
+    /* A poll is skipped when the tab is hidden, when one is already running, when a menu
+       or a field is open, and when the last successful read is still fresh. Between them
+       an idle tab costs nothing and a busy one is never fighting itself. */
+    setInterval(function () {
+      if (document.hidden || S.busy || S.pop) return;
+      var a = document.activeElement;
+      if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return;
+      if (S.lastOk && Date.now() - S.lastOk < X.MIN_GAP_MS) return;
+      load(true);
+    }, X.SYNC_MS);
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) return;
+      if (S.lastOk && Date.now() - S.lastOk < X.MIN_GAP_MS) return;
+      load(true);
+    });
+  }
+
+  /* ------------------------------------------------------------------ mount */
+  function boot(el) {
+    X.setRoot(el);
+    el.className = 'tp' + (S.tight ? ' tight' : '');
+    el.innerHTML =
+      '<div class="shell"><div id="rail" style="display:contents"></div><main>' +
+      '<div class="weave"><i style="background:#C40202"></i><i style="background:#EB9F0B"></i>' +
+      '<i style="background:#F2C230"></i><i style="background:#35939A"></i>' +
+      '<i style="background:#182643"></i><i style="background:#1F6E74"></i></div>' +
+      '<header id="hdr"></header><div id="content"></div></main></div>' +
+      '<div class="toast" id="toast"></div>';
+    el.querySelector('#rail').innerHTML = CH.drawRail();
+    CH.drawHeader();
+    bind();
+    load();
+  }
+
+  if (!document.getElementById('taxi-portal-css')) {
+    var st = document.createElement('style');
+    st.id = 'taxi-portal-css';
+    st.textContent = X.CSS;
+    document.head.appendChild(st);
+  }
+
+  /* Any uncaught error goes on the screen. A blank white page tells you nothing, and this
+     portal is mostly read on a phone where there is no console to open. */
+  window.addEventListener('error', function (ev) {
+    var el = document.querySelector('taxi-portal');
+    if (!el || el.getAttribute('data-crashed')) return;
+    el.setAttribute('data-crashed', '1');
+    el.innerHTML = '<div style="font:14px/1.6 system-ui,sans-serif;color:#C40202;padding:40px 22px;' +
+      'max-width:680px;margin:0 auto"><b style="font-size:17px">The portal hit an error</b>' +
+      '<p style="color:#111d1c">' + String(ev.message || ev.error || 'unknown') + '</p>' +
+      '<p style="color:#6E7A79;font-size:12px">' + String((ev.filename || '') + ' line ' +
+      (ev.lineno || '?')) + '</p><p style="color:#6E7A79;font-size:12px">Send this text on ' +
+      'and reload the page.</p></div>';
+  });
+
+  /* Mount. Custom elements are the normal path; the direct call is the safety net for an
+     older in-app browser or WebView where customElements is missing, because without it
+     the page would sit on "Loading" forever with no clue why. */
+  function mountAll() {
+    var list = document.querySelectorAll('taxi-portal');
+    for (var i = 0; i < list.length; i++) {
+      if (!list[i]._up) { list[i]._up = 1; boot(list[i]); }
+    }
+  }
+  if (typeof customElements !== 'undefined' && customElements.define) {
+    if (!customElements.get('taxi-portal')) {
+      try {
+        customElements.define('taxi-portal', class extends HTMLElement {
+          connectedCallback() { if (!this._up) { this._up = 1; boot(this); } }
+        });
+      } catch (e) { mountAll(); }
+    }
+    // If the upgrade never ran, mount by hand rather than leaving a dead page.
+    setTimeout(mountAll, 400);
+  } else if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', mountAll);
+  } else {
+    mountAll();
+  }
+})();
+
+</script>
 
 <noscript><div id="boot">This portal needs JavaScript.</div></noscript>
 </body>
