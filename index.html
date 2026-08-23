@@ -851,7 +851,7 @@ window.TAXI_LOGO = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX
   ];
   var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   var DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  var SYNC_MS = 20000;
+  var SYNC_MS = 60000;
 
   /* ------------------------------------------------------------------ format */
   function fmt(n) { return (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
@@ -961,6 +961,7 @@ window.TAXI_LOGO = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX
   }
 
   /* ------------------------------------------------------------------ server */
+   var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzpTnUffvv6wn_Uv04n2lDF8wNwt-uUe0k1NglVsIXhLcjkPwtf2N0P9CmzfbO7NR4NxA/exec';
   var live = !!(typeof google !== 'undefined' && google.script && google.script.run);
   function call(fn, args, ok, fail) {
     if (live) {
@@ -968,9 +969,25 @@ window.TAXI_LOGO = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX
       r[fn].apply(r, args);
       return;
     }
-    setTimeout(function () {
-      try { ok(window.TAXI_DEMO.run(fn, args)); } catch (e) { fail(e); }
-    }, 180);
+    fetch(APPS_SCRIPT_URL + '?fn=' + encodeURIComponent(fn) +
+          '&args=' + encodeURIComponent(JSON.stringify(args)) + '&_=' + Date.now(),
+          { cache: 'no-store', redirect: 'follow' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      })
+      .then(function (t) {
+        var d;
+        try { d = JSON.parse(t); }
+        catch (e) {
+          throw new Error(/<html/i.test(t)
+            ? 'The deployment is not public — set "Who has access" to Anyone.'
+            : 'The sheet did not return JSON.');
+        }
+        if (d && d.error) throw new Error(d.error);
+        ok(d);
+      })
+      .catch(fail);
   }
 
   function load(silent) {
