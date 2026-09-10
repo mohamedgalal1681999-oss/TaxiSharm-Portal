@@ -31,19 +31,54 @@
 
 <style>
   *{box-sizing:border-box}
-  html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;
+  html,body{margin:0;padding:0;width:100%;
             background:#F3F6F4;font-family:Outfit,system-ui,-apple-system,sans-serif}
-  iframe{border:none;width:100%;height:100vh;display:block}
+  /*
+    height:100vh + overflow:hidden here is what was clipping the portal. That combination
+    pins this page to exactly one screen's height and forbids it from scrolling — so the
+    iframe inside it was also stuck at one screen's height no matter how much the portal
+    actually needed to show. A page cut to "Nothing is due. Every confirmed day has" with
+    blank space under it, on a phone, is exactly that: real content past the fixed height,
+    with nowhere for it to go.
+
+    The fix is for this page to size itself to WHATEVER the portal reports, and to let the
+    page — not a fixed box — scroll. iframe height is set in JS below, from the portal's
+    own postMessage; min-height covers the moment before that first message arrives.
+  */
+  iframe{border:none;width:100%;display:block;min-height:100vh}
 </style>
 </head>
 
 <body>
 
 <iframe
+  id="portal"
   src="https://script.google.com/macros/s/AKfycbzpTnUffvv6wn_Uv04n2lDF8wNwt-uUe0k1NglVsIXhLcjkPwtf2N0P9CmzfbO7NR4NxA/exec"
   title="Taxi Sharm Settlement Portal"
   allow="clipboard-write"
 ></iframe>
+
+<script>
+(function () {
+  var frame = document.getElementById('portal');
+  /*
+    THE PORTAL REPORTS ITS OWN HEIGHT; THIS PAGE APPLIES IT.
+
+    An iframe never sizes itself to its content on its own — the parent page has to be
+    told. The portal (Index.html, in Apps Script) posts { taxiSharmHeight: <px> } to this
+    window whenever its content's height changes: a page switch, a table filling in, a
+    modal opening, the phone's on-screen keyboard appearing, a rotation. This is the other
+    half of that mechanism — without it, the message arrives and nothing happens.
+  */
+  window.addEventListener('message', function (e) {
+    var d = e && e.data;
+    if (!d || typeof d !== 'object') return;
+    var h = Number(d.taxiSharmHeight);
+    if (!h || h < 200) return;               // ignore anything that is clearly not a real height
+    frame.style.height = (h + 2) + 'px';      // +2: slack against a sub-pixel rounding scrollbar
+  });
+})();
+</script>
 
 </body>
 </html>
