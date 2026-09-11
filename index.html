@@ -1,84 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Taxi Sharm — Settlement</title>
-<meta name="description" content="Taxi Sharm driver settlement and reconciliation portal.">
 
-<meta property="og:title" content="Taxi Sharm — Settlement">
-<meta property="og:description" content="Driver settlement and reconciliation portal">
-<meta property="og:type" content="website">
-<meta property="og:image" content="https://mohamedgalal1681999-oss.github.io/TaxiSharm-Portal/favicon-512x512.png">
-<meta property="og:url" content="https://mohamedgalal1681999-oss.github.io/TaxiSharm-Portal/">
-
-<meta name="theme-color" content="#12474C">
 <link rel="icon" href="favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#12474C">
+
+<meta property="og:title" content="Taxi Sharm — Settlement">
+<meta property="og:description" content="Driver settlement and reconciliation portal">
+<meta property="og:image" content="https://mohamedgalal1681999-oss.github.io/TaxiSharm-Portal/favicon-512x512.png">
+<meta property="og:url" content="https://mohamedgalal1681999-oss.github.io/TaxiSharm-Portal/">
+<meta property="og:type" content="website">
 
 <!--
-  The portal itself lives in Apps Script, and this page is only a frame around it. That is
-  deliberate: it is the one arrangement where there is a SINGLE copy of the portal. Edit
-  Index.html in Apps Script, publish a new version, and this page shows it at once with
-  nothing to do on GitHub. Pasting a full copy of the portal here as well is what lets the
-  two drift apart until nobody can say which one is right.
+  THE WRAPPER, AND ALL IT DOES IS GIVE THE PORTAL A VIEWPORT.
 
-  Only the src below ever changes here — and only if you create a NEW DEPLOYMENT instead
-  of publishing a new version of the existing one.
+  The previous arrangement grew this frame to the height of its content. That is what broke
+  the screen: an iframe as tall as its own content has no scrollport, so nothing inside it
+  can stick — not the rail, not the page header, not a table's header row — and the
+  scrolling was happening out here, in a page that knows nothing about any of them. It also
+  raced its own measurement, which is what cut the bottom off on a phone.
+
+  So the frame is a fixed viewport and the portal scrolls inside itself, the way any
+  application does. There is no message to listen for and no height to compute. Do not put
+  a resize script back in.
+
+  THE ONLY LINE YOU EVER EDIT is the src below: the /exec URL of the Apps Script
+  deployment. It must end in /exec, and that deployment must be "Execute as: Me" with
+  "Who has access: Anyone". Every time Code.gs changes, publish a NEW VERSION — editing the
+  code alone does nothing to this URL.
 -->
-
 <style>
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0;width:100%;
-            background:#F3F6F4;font-family:Outfit,system-ui,-apple-system,sans-serif}
-  /*
-    height:100vh + overflow:hidden here is what was clipping the portal. That combination
-    pins this page to exactly one screen's height and forbids it from scrolling — so the
-    iframe inside it was also stuck at one screen's height no matter how much the portal
-    actually needed to show. A page cut to "Nothing is due. Every confirmed day has" with
-    blank space under it, on a phone, is exactly that: real content past the fixed height,
-    with nowhere for it to go.
-
-    The fix is for this page to size itself to WHATEVER the portal reports, and to let the
-    page — not a fixed box — scroll. iframe height is set in JS below, from the portal's
-    own postMessage; min-height covers the moment before that first message arrives.
-  */
-  iframe{border:none;width:100%;display:block;min-height:100vh}
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;              /* the portal scrolls; this page never does */
+    background: #12474C;
+    -webkit-text-size-adjust: 100%;
+  }
+  #portal {
+    display: block;
+    border: 0;
+    width: 100%;
+    height: 100vh;
+  }
+  /* On iOS 100vh is the height with the toolbars HIDDEN, so it is always a toolbar too
+     tall and the portal's last row sits under the address bar. */
+  @supports (height: 100dvh) {
+    #portal { height: 100dvh; }
+  }
 </style>
 </head>
-
 <body>
 
-<iframe
-  id="portal"
-  src="https://script.google.com/macros/s/AKfycbzpTnUffvv6wn_Uv04n2lDF8wNwt-uUe0k1NglVsIXhLcjkPwtf2N0P9CmzfbO7NR4NxA/exec"
-  title="Taxi Sharm Settlement Portal"
-  allow="clipboard-write"
-></iframe>
-
-<script>
-(function () {
-  var frame = document.getElementById('portal');
-  /*
-    THE PORTAL REPORTS ITS OWN HEIGHT; THIS PAGE APPLIES IT.
-
-    An iframe never sizes itself to its content on its own — the parent page has to be
-    told. The portal (Index.html, in Apps Script) posts { taxiSharmHeight: <px> } to this
-    window whenever its content's height changes: a page switch, a table filling in, a
-    modal opening, the phone's on-screen keyboard appearing, a rotation. This is the other
-    half of that mechanism — without it, the message arrives and nothing happens.
-  */
-  window.addEventListener('message', function (e) {
-    var d = e && e.data;
-    if (!d || typeof d !== 'object') return;
-    var h = Number(d.taxiSharmHeight);
-    if (!h || h < 200) return;               // ignore anything that is clearly not a real height
-    frame.style.height = (h + 2) + 'px';      // +2: slack against a sub-pixel rounding scrollbar
-  });
-})();
-</script>
+<iframe id="portal"
+        title="Taxi Sharm Settlement"
+        src="https://script.google.com/macros/s/AKfycbzpTnUffvv6wn_Uv04n2lDF8wNwt-uUe0k1NglVsIXhLcjkPwtf2N0P9CmzfbO7NR4NxA/exec"
+        allow="clipboard-write"></iframe>
 
 </body>
 </html>
